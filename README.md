@@ -1,21 +1,22 @@
-# 🌌 Earth-Mars Distance Calculator
+# 🌌 Space Distance Calculator
 
-This is a simple Python project that calculates the distance between Earth and Mars using 2D coordinates.
+A Python script to calculate the distance between planets (or custom coordinates) in 2D space.  
 
-## 🧠 Concept
-- Earth is placed at the origin `(0, 0)`  
-- Mars is placed at approximately `(225, 0)` million km  
-- Distance is calculated using the formula:
+Distance is measured in **million kilometers** using the formula:
 
-d = √((x₂ - x₁)² + (y₂ - y₁)²)
+\[
+d = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}
+\]
 
-## ⚙️ Tech
-- Python
-- Math module
+## ⚙️ Features
+- Predefined planets: Earth, Mars, Venus, Jupiter, Saturn  
+- Option to enter custom coordinates  
+- Fun messages based on distance  
+- Input validation  
 
 ## ▶️ How to Run
-1. Make sure you have Python installed.
+1. Make sure Python 3.x is installed.
 2. Run the script:
 
 ```bash
-python interplanetary_distance.py
+python space_distance_calculator.py
