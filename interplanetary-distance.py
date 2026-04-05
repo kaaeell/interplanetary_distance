@@ -1,28 +1,25 @@
 import math
 
-# 🚀 Space Distance Calculator v3
-# Now with more options and fun facts. Because space is big. Really big.
+# Space Distance Calculator v4
+# yeah... we measure space now 😎
 
 def calculate_distance(p1, p2):
-    """Calculate distance between two points in 2D space."""
     return math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
 
 
-def get_planet_position(name):
-    """Ask user for planet coordinates in million km."""
-    print(f"\nEnter coordinates for {name} (in million km):")
-    
+def get_coordinates(name):
+    print(f"\nEnter coordinates for {name} (million km):")
+
     while True:
         try:
             x = float(input("  x: "))
             y = float(input("  y: "))
             return (x, y)
-        except ValueError:
-            print("⚠️  Please enter a valid number. Space math doesn't forgive mistakes!")
+        except:
+            print("bro... numbers only 💀")
 
 
-def select_predefined_planets():
-    """User can choose planets from a predefined list."""
+def choose_planets():
     planets = {
         "Earth": (0, 0),
         "Mars": (225, 0),
@@ -30,61 +27,84 @@ def select_predefined_planets():
         "Jupiter": (778, 0),
         "Saturn": (1427, 0)
     }
-    print("\n🌍 Available planets:")
-    for i, planet in enumerate(planets.keys(), start=1):
-        print(f"  {i}. {planet}")
-    
-    def choose_planet(prompt):
+
+    print("\nAvailable planets:")
+    for i, name in enumerate(planets, start=1):
+        print(f"{i}. {name}")
+
+    names = list(planets.keys())
+    values = list(planets.values())
+
+    def pick(msg):
         while True:
             try:
-                choice = int(input(prompt))
-                if 1 <= choice <= len(planets):
-                    return list(planets.values())[choice-1], list(planets.keys())[choice-1]
+                choice = int(input(msg))
+                if 1 <= choice <= len(names):
+                    return names[choice-1], values[choice-1]
                 else:
-                    print("⚠️  Invalid number, try again.")
-            except ValueError:
-                print("⚠️  Enter a number, not a black hole.")
+                    print("not on the list bro 😭")
+            except:
+                print("type a number... not a spell")
 
-    p1_pos, p1_name = choose_planet("Choose Planet 1 by number: ")
-    p2_pos, p2_name = choose_planet("Choose Planet 2 by number: ")
-    return p1_pos, p2_pos, p1_name, p2_name
+    name1, p1 = pick("Planet 1: ")
+    name2, p2 = pick("Planet 2: ")
+
+    if name1 == name2:
+        print("you really picked the same planet twice 💀 try again")
+        return None
+
+    return name1, p1, name2, p2
+
+
+def show_fun_comment(distance):
+    if distance > 1000:
+        print("😱 that's crazy far... even light needs a break")
+    elif distance > 300:
+        print("😳 long distance relationship level")
+    elif distance > 100:
+        print("🙂 chill distance, nothing dramatic")
+    else:
+        print("🚀 kinda close ngl")
+
+    if distance < 1:
+        print("✨ basically neighbors, go say hi")
+    elif distance < 50:
+        print("🪐 you could almost throw a rock (please don't)")
 
 
 def main():
-    print("🌌 Welcome to the Space Distance Calculator v3")
-    print("Let's measure the cosmic gaps between your favorite planets 👀")
+    print("\n🌌 Space Distance Calculator v4")
+    print("we measure space so you don't have to")
 
-    choice = input("\nDo you want to use (1) predefined planets or (2) custom coordinates? (1/2): ").strip()
+    choice = input("\n1 = planets | 2 = custom coords → ")
 
-    if choice == '2':
-        planet1 = get_planet_position("Planet 1")
-        planet2 = get_planet_position("Planet 2")
-        p1_name = "Planet 1"
-        p2_name = "Planet 2"
+    if choice == "2":
+        p1 = get_coordinates("Planet 1")
+        p2 = get_coordinates("Planet 2")
+        name1, name2 = "Planet 1", "Planet 2"
     else:
-        planet1, planet2, p1_name, p2_name = select_predefined_planets()
+        result = choose_planets()
+        if result is None:
+            return
+        name1, p1, name2, p2 = result
 
-    distance = calculate_distance(planet1, planet2)
+    distance = calculate_distance(p1, p2)
+    distance_km = distance * 1_000_000
 
-    print("\n🌠 Calculating distance...")
-    print(f"📏 Distance between {p1_name} and {p2_name}: {distance:.2f} million km")
+    print("\ncalculating...")
+    print(f"\n📏 {name1} ↔ {name2}")
+    print(f"{distance:.2f} million km")
+    print(f"{distance_km:,.0f} km")
 
-    # Fun comments based on distance
-    if distance > 1000:
-        print("😱 Whoa! That's basically light-years away (almost).")
-    elif distance > 300:
-        print("😳 That's FAR... like long-distance relationship far.")
-    elif distance > 100:
-        print("🙂 Not too close, not too far. Space vibes.")
-    else:
-        print("🚀 Pretty close! Elon would approve.")
+    show_fun_comment(distance)
 
-    # Optional: give a fun fact about distance
-    if distance < 1:
-        print("✨ Wow, practically neighbors! Time for interplanetary coffee? ☕")
-    elif distance < 50:
-        print("🪐 You could almost throw a meteor and hit it. Not recommended though.")
+    print("\n(note: this is simplified 2D space, NASA please don't sue me 😂)")
 
 
-if __name__ == "__main__":
+# loop so user doesn't have to restart every time
+while True:
     main()
+    again = input("\nagain? (y/n): ").lower()
+    if again != "y":
+        print("👋 leaving the universe... bye")
+        break
