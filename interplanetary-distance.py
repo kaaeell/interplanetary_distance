@@ -1,110 +1,80 @@
 import math
 
-# Space Distance Calculator v4
-# yeah... we measure space now 😎
+# Space Distance Calculator v3
+# simple project, clean logic, a bit of fun
 
 def calculate_distance(p1, p2):
     return math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
 
 
 def get_coordinates(name):
-    print(f"\nEnter coordinates for {name} (million km):")
-
     while True:
         try:
-            x = float(input("  x: "))
-            y = float(input("  y: "))
+            print(f"\nEnter coordinates for {name} (in million km)")
+            x = float(input("x: "))
+            y = float(input("y: "))
             return (x, y)
-        except:
-            print("bro... numbers only 💀")
+        except ValueError:
+            print("invalid input, try again")
 
 
 def choose_planets():
     planets = {
-        "Earth": (0, 0),
-        "Mars": (225, 0),
-        "Venus": (108, 0),
-        "Jupiter": (778, 0),
-        "Saturn": (1427, 0)
+        1: ("Earth", (0, 0)),
+        2: ("Mars", (225, 0)),
+        3: ("Venus", (108, 0)),
+        4: ("Jupiter", (778, 0)),
+        5: ("Saturn", (1427, 0))
     }
 
     print("\nAvailable planets:")
-    for i, name in enumerate(planets, start=1):
-        print(f"{i}. {name}")
-
-    names = list(planets.keys())
-    values = list(planets.values())
+    for num, (name, _) in planets.items():
+        print(f"{num}. {name}")
 
     def pick(msg):
         while True:
             try:
                 choice = int(input(msg))
-                if 1 <= choice <= len(names):
-                    return names[choice-1], values[choice-1]
+                if choice in planets:
+                    return planets[choice]
                 else:
-                    print("not on the list bro 😭")
-            except:
-                print("type a number... not a spell")
+                    print("choose a valid number")
+            except ValueError:
+                print("numbers only pls")
 
-    name1, p1 = pick("Planet 1: ")
-    name2, p2 = pick("Planet 2: ")
+    p1_name, p1 = pick("Choose planet 1: ")
+    p2_name, p2 = pick("Choose planet 2: ")
 
-    if name1 == name2:
-        print("you really picked the same planet twice 💀 try again")
-        return None
-
-    return name1, p1, name2, p2
-
-
-def show_fun_comment(distance):
-    if distance > 1000:
-        print("😱 that's crazy far... even light needs a break")
-    elif distance > 300:
-        print("😳 long distance relationship level")
-    elif distance > 100:
-        print("🙂 chill distance, nothing dramatic")
-    else:
-        print("🚀 kinda close ngl")
-
-    if distance < 1:
-        print("✨ basically neighbors, go say hi")
-    elif distance < 50:
-        print("🪐 you could almost throw a rock (please don't)")
+    return p1_name, p1, p2_name, p2
 
 
 def main():
-    print("\n🌌 Space Distance Calculator v4")
-    print("we measure space so you don't have to")
+    print("🌌 Space Distance Calculator v3")
+    print("let's measure some space stuff\n")
 
-    choice = input("\n1 = planets | 2 = custom coords → ")
+    mode = input("1 = planets | 2 = custom coordinates: ").strip()
 
-    if choice == "2":
-        p1 = get_coordinates("Planet 1")
-        p2 = get_coordinates("Planet 2")
-        name1, name2 = "Planet 1", "Planet 2"
+    if mode == "2":
+        p1 = get_coordinates("Point 1")
+        p2 = get_coordinates("Point 2")
+        p1_name, p2_name = "Point 1", "Point 2"
     else:
-        result = choose_planets()
-        if result is None:
-            return
-        name1, p1, name2, p2 = result
+        p1_name, p1, p2_name, p2 = choose_planets()
 
     distance = calculate_distance(p1, p2)
-    distance_km = distance * 1_000_000
 
-    print("\ncalculating...")
-    print(f"\n📏 {name1} ↔ {name2}")
-    print(f"{distance:.2f} million km")
-    print(f"{distance_km:,.0f} km")
+    print(f"\nDistance between {p1_name} and {p2_name}: {distance:.2f} million km")
 
-    show_fun_comment(distance)
+    # small personality
+    if distance > 1000:
+        print("😱 that's insanely far")
+    elif distance > 300:
+        print("😳 long distance relationship level")
+    elif distance > 100:
+        print("🙂 decent space gap")
+    else:
+        print("🚀 pretty close actually")
 
-    print("\n(note: this is simplified 2D space, NASA please don't sue me 😂)")
 
-
-# loop so user doesn't have to restart every time
-while True:
+if __name__ == "__main__":
     main()
-    again = input("\nagain? (y/n): ").lower()
-    if again != "y":
-        print("👋 leaving the universe... bye")
-        break
