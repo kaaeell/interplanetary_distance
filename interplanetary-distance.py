@@ -1,7 +1,11 @@
 import math
+import random
 
-# Space Distance Calculator v3
-# simple project, clean logic, a bit of fun
+# Space Distance Calculator v4
+# still simple, just got a bit smarter
+
+history = []
+
 
 def calculate_distance(p1, p2):
     return math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
@@ -48,32 +52,66 @@ def choose_planets():
     return p1_name, p1, p2_name, p2
 
 
+def show_fun_fact():
+    facts = [
+        "Jupiter is so big it could fit all planets inside it 😳",
+        "A day on Venus is longer than a year there",
+        "Saturn could float in water (if you find a big enough ocean lol)",
+        "Mars sunsets are blue, not red",
+        "Space is completely silent, no sound at all"
+    ]
+    print(f"\n🧠 fun fact: {random.choice(facts)}")
+
+
 def main():
-    print("🌌 Space Distance Calculator v3")
-    print("let's measure some space stuff\n")
+    print("🌌 Space Distance Calculator v4")
+    print("now with memory and random space knowledge\n")
 
-    mode = input("1 = planets | 2 = custom coordinates: ").strip()
+    while True:
+        mode = input("1 = planets | 2 = custom coordinates | 3 = history: ").strip()
 
-    if mode == "2":
-        p1 = get_coordinates("Point 1")
-        p2 = get_coordinates("Point 2")
-        p1_name, p2_name = "Point 1", "Point 2"
-    else:
-        p1_name, p1, p2_name, p2 = choose_planets()
+        if mode == "3":
+            if not history:
+                print("\nno history yet, go calculate something first")
+            else:
+                print("\n📜 previous calculations:")
+                for item in history:
+                    print(item)
+            continue
 
-    distance = calculate_distance(p1, p2)
+        if mode == "2":
+            p1 = get_coordinates("Point 1")
+            p2 = get_coordinates("Point 2")
+            p1_name, p2_name = "Point 1", "Point 2"
+        else:
+            p1_name, p1, p2_name, p2 = choose_planets()
 
-    print(f"\nDistance between {p1_name} and {p2_name}: {distance:.2f} million km")
+        distance = calculate_distance(p1, p2)
 
-    # small personality
-    if distance > 1000:
-        print("😱 that's insanely far")
-    elif distance > 300:
-        print("😳 long distance relationship level")
-    elif distance > 100:
-        print("🙂 decent space gap")
-    else:
-        print("🚀 pretty close actually")
+        # convert to km
+        distance_km = distance * 1_000_000
+
+        result = f"{p1_name} ↔ {p2_name}: {distance:.2f} million km ({distance_km:.0f} km)"
+        print(f"\nDistance: {result}")
+
+        history.append(result)
+
+        # personality stays
+        if distance > 1000:
+            print("😱 that's insanely far")
+        elif distance > 300:
+            print("😳 long distance relationship level")
+        elif distance > 100:
+            print("🙂 decent space gap")
+        else:
+            print("🚀 pretty close actually")
+
+        show_fun_fact()
+
+        again = input("\nrun again? (y/n): ").lower()
+        if again != "y":
+            print("alright, back to earth 🌍")
+            break
 
 
 if __name__ == "__main__":
