@@ -1,8 +1,8 @@
 import math
 import random
 
-# Space Distance Calculator v4
-# still simple, just got a bit smarter
+# Space Distance Calculator v5
+# now with light speed because why not
 
 history = []
 
@@ -64,8 +64,8 @@ def show_fun_fact():
 
 
 def main():
-    print("🌌 Space Distance Calculator v4")
-    print("now with memory and random space knowledge\n")
+    print("🌌 Space Distance Calculator v5")
+    print("now with memory, fun facts, and light speed\n")
 
     while True:
         mode = input("1 = planets | 2 = custom coordinates | 3 = history: ").strip()
@@ -95,6 +95,16 @@ def main():
         print(f"\nDistance: {result}")
 
         history.append(result)
+
+        # light speed time
+        light_speed = 299_792
+        time_seconds = distance_km / light_speed
+        time_minutes = time_seconds / 60
+
+        print(f"⚡ light travel time: {time_seconds:.2f} seconds ({time_minutes:.2f} minutes)")
+
+        if time_minutes > 60:
+            print("💀 even light needs a break for this one")
 
         # personality stays
         if distance > 1000:
