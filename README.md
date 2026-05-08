@@ -1,41 +1,39 @@
 # 🌌 Space Distance Calculator
 
-A simple Python project to calculate the distance between planets (or any two points) in 2D space.
+A simple Python project that calculates the distance between planets (or any two points) in 2D space.
 
-Made while practicing Python… and slightly avoiding other responsibilities.
+Made while learning Python and trying to stay productive instead of doing literally anything else.
 
 ---
 
 ## 🧠 How it works
 
-It uses the classic distance formula:
+It uses the basic distance formula:
 
 d = √((x₂ - x₁)² + (y₂ - y₁)²)
 
-Nothing crazy, just math doing its job.
+Nothing fancy, just math doing math things.
 
 ---
 
 ## ⚙️ Features
 
-* Choose from predefined planets:
+- Pick from predefined planets:
+  - Earth
+  - Mars
+  - Venus
+  - Jupiter
+  - Saturn
 
-  * Earth
-  * Mars
-  * Venus
-  * Jupiter
-  * Saturn
+- Or enter your own coordinates
 
-* Option to enter custom coordinates
+- Shows distance in:
+  - million km
+  - km
 
-* Distance shown in:
+- Input validation (so it doesn’t instantly crash)
 
-  * million kilometers
-  * kilometers
-
-* Input validation (so it doesn’t break instantly)
-
-* Keeps a small history of calculations
+- Saves a simple history of calculations
 
 ---
 
@@ -74,6 +72,8 @@ Distance: Earth ↔ Mars: 225.00 million km (225000000 km)
 * Add more planets
 * Use real data from an API
 * Build a simple GUI
+* Use real astronomical data
+* Maybe animate the travel time (light speed stuff)
 
 ---
 
