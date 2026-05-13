@@ -8,6 +8,14 @@ history = []
 # total calculations counter
 total_calculations = 0
 
+# random galaxy names
+galaxy_names = [
+    "Milky Way",
+    "Andromeda",
+    "Sombrero Galaxy",
+    "Whirlpool Galaxy"
+]
+
 
 def calculate_distance(p1, p2):
 
@@ -121,18 +129,17 @@ def mission_status():
     print(random.choice(missions))
 
 
-# NEW thing today
 def detect_black_hole():
 
     chance = random.randint(1, 10)
 
     if chance == 1:
         print("🕳️ black hole detected nearby RUN")
+
     else:
         print("✅ no black holes nearby")
 
 
-# NEW thing today
 def oxygen_level():
 
     oxygen = random.randint(70, 100)
@@ -158,12 +165,20 @@ def random_rank(distance):
         print("🏆 rank: moon walker")
 
 
+# new simple galaxy feature
+def random_galaxy():
+
+    galaxy = random.choice(galaxy_names)
+
+    print(f"🌌 nearby galaxy detected: {galaxy}")
+
+
 def main():
 
     global total_calculations
 
     startup_messages = [
-        "space calculator v9 ready",
+        "space calculator v10 ready",
         "doing questionable space math",
         "probably accurate enough",
         "welcome back commander"
@@ -209,8 +224,14 @@ def main():
         else:
             p1_name, p1, p2_name, p2 = choose_planets()
 
-        print("\ncalculating distance...")
-        time.sleep(1)
+        # loading effect
+        print("\ncalculating", end="")
+
+        for i in range(3):
+            time.sleep(0.5)
+            print(".", end="")
+
+        print()
 
         distance = calculate_distance(p1, p2)
 
@@ -248,6 +269,21 @@ def main():
 
         print(f"🌍 that's around Earth {earth_trips:.0f} times")
 
+        # fuel level
+        fuel = random.randint(20, 100)
+
+        print(f"⛽ spaceship fuel: {fuel}%")
+
+        # planet moods
+        planet_moods = [
+            "🪐 Saturn looks chill today",
+            "🔴 Mars seems angry",
+            "🌍 Earth looking peaceful",
+            "🟣 Neptune vibes are weird rn"
+        ]
+
+        print(random.choice(planet_moods))
+
         # reactions
         if distance > 3000:
             print("😱 that's insanely insanely far")
@@ -265,6 +301,7 @@ def main():
         detect_black_hole()
         oxygen_level()
         random_rank(distance)
+        random_galaxy()
 
         # random exploration score
         score = random.randint(1, 100)
