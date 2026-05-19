@@ -46,6 +46,7 @@ spaceships = [
     "Nebula One"
 ]
 
+# space pets names
 space_pets = [
     "space dog",
     "robot cat",
