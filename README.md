@@ -64,6 +64,7 @@ Distance: Earth ↔ Mars: 225.00 million km (225000000 km)
 
 * Distances are simplified (space is complicated, this is not NASA)
 * Built mainly for learning and a bit of fun
+* The names and some stuff there is not real because this is just training for me
 
 ---
 
