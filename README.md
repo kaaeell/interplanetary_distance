@@ -82,3 +82,4 @@ Distance: Earth ↔ Mars: 225.00 million km (225000000 km)
 
 CS student learning Python and building small projects.
 Trying to make code work first… then make it clean later.
+btw the code is not perfect yet it gonna me good in few next days ;)
