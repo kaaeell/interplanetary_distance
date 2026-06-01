@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 
 #the code is NOT finished yeeeeeeeeeeet
+#and not perfect :)
 
 history = []
 total_calculations = 0
