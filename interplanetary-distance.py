@@ -3,6 +3,8 @@ import random
 import time
 from datetime import datetime
 
+#the code is NOT finished yeeeeeeeeeeet
+
 history = []
 total_calculations = 0
 highest_distance = 0
