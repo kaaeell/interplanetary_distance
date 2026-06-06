@@ -135,17 +135,118 @@ def shield_status(): print(f"🛡️ shield power: {random.randint(20,100)}%")
 def laser_power(): print(f"🔫 laser system power: {random.randint(10,100)}%")
 def gravity_level(): print(f"🌍 gravity level: {round(random.uniform(0.2,5.0),2)}G")
 
+def show_all_fluff(distance):
+    """Show all the fun random space info after a calculation"""
+    print("\n" + "="*50)
+    random_space_weather()
+    show_space_event()
+    random_galaxy()
+    random_astronaut()
+    random_spaceship()
+    distance_category(distance)
+    random_rank(distance)
+    random_signal()
+    moon_phase()
+    crew_mood()
+    temperature_check()
+    danger_level()
+    daily_space_tip()
+    random_space_pet()
+    random_badge()
+    signal_strength()
+    credits()
+    asteroid_scan()
+    alien_encounter()
+    space_food()
+    engine_status()
+    warp_drive()
+    random_space_job()
+    planet_condition()
+    shield_status()
+    laser_power()
+    gravity_level()
+    detect_black_hole()
+    oxygen_level()
+    mission_status()
+    show_fun_fact()
+    print("="*50)
+
 def main():
     global total_calculations, highest_distance, missions_completed
     print("\n🌌 Space Distance Calculator")
     print(random.choice(["space calculator v13 ready","doing questionable space math","probably accurate enough","welcome back commander"]))
     today=datetime.now()
     print(f"📅 date: {today.strftime('%Y-%m-%d')} 🕒 time: {today.strftime('%H:%M:%S')}")
+    
     while True:
         mode=input("\n1 planets | 2 custom | 3 history | 4 stats | 5 clear history: ").strip()
+        
         if mode=="3":
             print("\nhistory:" if history else "no history yet")
-            for item in history: print(item)
+            for item in history: 
+                print(item)
             continue
+            
         if mode=="4":
-            print(f"\n📊 total calculations: {total_calculations}\n📜 saved history count: {len(history)}\n🏆 highest distance recorded: {highest_distance:.2f} million
+            print(f"\n📊 total calculations: {total_calculations}")
+            print(f"📜 saved history count: {len(history)}")
+            print(f"🏆 highest distance recorded: {highest_distance:.2f} million km")
+            print(f"🚀 missions completed: {missions_completed}")
+            continue
+            
+        if mode=="5":
+            history.clear()
+            total_calculations = 0
+            highest_distance = 0
+            missions_completed = 0
+            print("🧹 History cleared!")
+            continue
+            
+        if mode=="1":
+            # Planet mode
+            p1_name, p1, p2_name, p2 = choose_planets()
+            distance = calculate_distance(p1, p2)
+            
+        elif mode=="2":
+            # Custom coordinates mode
+            print("\n✨ CUSTOM LOCATION MODE ✨")
+            p1_name = input("Name of starting location: ") or "Start"
+            p2_name = input("Name of destination: ") or "Destination"
+            p1 = get_coordinates(p1_name)
+            p2 = get_coordinates(p2_name)
+            distance = calculate_distance(p1, p2)
+            
+        else:
+            print("❌ Invalid option. Choose 1-5")
+            continue
+            
+        # Process the calculation
+        total_calculations += 1
+        missions_completed += 1
+        
+        if distance > highest_distance:
+            highest_distance = distance
+            print("\n🎉 NEW RECORD DISTANCE! 🎉")
+        
+        print(f"\n{'='*50}")
+        print(f"📍 FROM: {p1_name} {p1}")
+        print(f"📍 TO: {p2_name} {p2}")
+        print(f"📏 DISTANCE: {distance:.2f} million km")
+        print(f"{'='*50}")
+        
+        # Store in history
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        history_entry = f"[{timestamp}] {p1_name} → {p2_name}: {distance:.2f} million km"
+        history.append(history_entry)
+        
+        # Show all the fun space info
+        show_all_fluff(distance)
+        
+        # Special milestone messages
+        if missions_completed % 5 == 0:
+            print(f"\n🎉 MISSION MILESTONE! {missions_completed} missions completed! 🎉")
+            print(random.choice(alien_greetings))
+            print(random.choice(space_jokes))
+
+if __name__ == "__main__":
+    main()
