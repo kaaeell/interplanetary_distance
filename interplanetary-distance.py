@@ -4,17 +4,19 @@ import time
 from datetime import datetime
 import os
 
-# the code is getting COOLER nowwwww
-# added achievements, fuel system, alien trading, and more!
+# the code is getting EVEN BETTER today! ✨
+# added: wormholes, space pirates, crew morale, and more surprises!
 
 history = []
 total_calculations = 0
 highest_distance = 0
 missions_completed = 0
-fuel = 5000  # Starting fuel in units
-credits_total = 1000  # Starting space credits
+fuel = 5000
+credits_total = 1000
 achievements = []
 inventory = []
+crew_morale = 80  # NEW: Crew morale system!
+consecutive_missions = 0  # NEW: Streak counter
 
 galaxy_names = ["Milky Way","Andromeda","Sombrero Galaxy","Whirlpool Galaxy","Black Eye Galaxy","Cartwheel Galaxy"]
 astronauts = ["Neil","Buzz","Sally","Yuri","Mae","Chris","Valentina"]
@@ -30,7 +32,15 @@ comet_names = ["Halley","Encke","Hale-Bopp","Swift-Tuttle","Neowise"]
 space_jokes = ["Why did the star go to school? To get a little brighter!","What do astronauts use to keep their pants up? An asteroid belt!","Why don't aliens visit our solar system? They read the reviews… only one star!"]
 alien_greetings = ["👽 Blip blop!","👾 Greetings Earthling!","🛸 Take me to your leader!","🛸 Beep boop!"]
 
-# NEW: Cool achievements system
+# NEW: Random events that can happen during missions
+random_events = [
+    {"name": "🌀 WORMHOLE!", "effect": "shortcut", "message": "You found a wormhole! Distance reduced by 40%!", "modifier": 0.6},
+    {"name": "🏴‍☠️ SPACE PIRATES!", "effect": "danger", "message": "Space pirates attacked! Lost 200 fuel and 100 credits!", "fuel": -200, "credits": -100},
+    {"name": "✨ COSMIC CACHE", "effect": "reward", "message": "Found a floating cargo pod! +300 credits and +150 fuel!", "fuel": 150, "credits": 300},
+    {"name": "🌊 SOLAR FLARE", "effect": "danger", "message": "Solar flare damaged shields! Lost 100 fuel!", "fuel": -100},
+    {"name": "🤝 FRIENDLY ALIENS", "effect": "reward", "message": "Friendly aliens gave you a gift! +250 credits!", "credits": 250}
+]
+
 achievement_list = {
     "first_step": "🌱 First Step - Complete your first mission",
     "milky_way_tourist": "🌌 Milky Way Tourist - Travel over 2000 million km",
@@ -40,10 +50,11 @@ achievement_list = {
     "speed_demon": "⚡ Speed Demon - Complete a mission in under 30 seconds",
     "badge_collector": "🎖️ Badge Collector - Earn 5 different badges",
     "pet_lover": "🐾 Pet Lover - Adopt a space pet",
-    "galaxy_legend": "⭐ Galaxy Legend - Complete 50 missions"
+    "galaxy_legend": "⭐ Galaxy Legend - Complete 50 missions",
+    "streak_master": "🔥 Streak Master - Complete 5 missions in a row!",  # NEW
+    "wormhole_rider": "🌀 Wormhole Rider - Successfully use a wormhole"  # NEW
 }
 
-# NEW: Nebula locations for fuel collection
 nebulae = {
     "Orion Nebula": (1340, -220),
     "Eagle Nebula": (7000, 0),
@@ -52,7 +63,6 @@ nebulae = {
     "Tarantula Nebula": (160000, 5000)
 }
 
-# NEW: Alien trading items
 alien_items = {
     "🌌 dark matter crystal": 500,
     "💫 warp core upgrade": 2000,
@@ -97,283 +107,285 @@ def choose_planets():
     p2_name,p2 = pick("Choose planet 2: ")
     return p1_name,p1,p2_name,p2
 
-# NEW: Fuel check before mission
+# NEW: Random event trigger during missions
+def trigger_random_event():
+    global fuel, credits_total, consecutive_missions
+    if random.random() < 0.3:  # 30% chance of random event
+        event = random.choice(random_events)
+        print(f"\n⚠️ EVENT: {event['name']} ⚠️")
+        print(event['message'])
+        
+        if 'modifier' in event:
+            return event['modifier']  # Return distance modifier
+        if 'fuel' in event:
+            fuel = max(0, fuel + event['fuel'])
+        if 'credits' in event:
+            credits_total = max(0, credits_total + event['credits'])
+        
+        if event['name'] == "🌀 WORMHOLE!":
+            check_achievement("wormhole_rider")
+        
+        return 1.0  # No distance change
+    return 1.0
+
+# NEW: Crew morale system
+def update_crew_morale(distance, success=True):
+    global crew_morale, consecutive_missions
+    if success:
+        gain = random.randint(5, 15)
+        crew_morale = min(100, crew_morale + gain)
+        consecutive_missions += 1
+        print(f"😊 Crew morale +{gain}! (Now: {crew_morale}%)")
+        if consecutive_missions >= 5:
+            check_achievement("streak_master")
+    else:
+        loss = random.randint(10, 25)
+        crew_morale = max(0, crew_morale - loss)
+        consecutive_missions = 0
+        print(f"😞 Crew morale -{loss}! (Now: {crew_morale}%)")
+    
+    # Morale bonuses
+    if crew_morale > 80:
+        print("🎉 Crew is HYPED! +10% bonus to next mission!")
+    elif crew_morale < 30:
+        print("⚠️ Crew morale is critically low! Take a break or buy space pizza!")
+
+# NEW: Show crew status bar
+def show_crew_status():
+    bar_length = 20
+    filled = int(bar_length * crew_morale / 100)
+    bar = "█" * filled + "░" * (bar_length - filled)
+    mood_emoji = "😄" if crew_morale > 70 else "😐" if crew_morale > 40 else "😞"
+    print(f"👥 Crew Morale: [{bar}] {crew_morale}% {mood_emoji}")
+
 def check_fuel(distance):
     global fuel
-    fuel_needed = distance * 0.5  # 0.5 fuel units per million km
+    fuel_needed = distance * 0.5
     if fuel < fuel_needed:
         print(f"\n⚠️ INSUFFICIENT FUEL! Need {fuel_needed:.1f} units, have {fuel:.1f}")
         print("🎲 Attempting emergency fuel collection...")
         collect_emergency_fuel()
-        return check_fuel(distance)  # Recursive check after collection
+        return check_fuel(distance)
     else:
         fuel -= fuel_needed
         print(f"⛽ Fuel used: {fuel_needed:.1f} units | Remaining: {fuel:.1f}")
         return True
 
-# NEW: Emergency fuel collection mini-game
 def collect_emergency_fuel():
     global fuel, credits_total
     print("\n🔄 EMERGENCY FUEL COLLECTION MODE 🔄")
-    print("You have 3 options:")
-    print("1. 🛸 Mine nearby asteroid (risky but free)")
-    print("2. 💰 Buy fuel from space station (costs credits)")
-    print("3. 🎲 Try your luck at space casino (gamble!)")
+    print("1. 🛸 Mine asteroid (risky but free)")
+    print("2. 💰 Buy fuel (costs credits)")
+    print("3. 🎲 Space casino (gamble!)")
     
     choice = input("Choose: ")
     
     if choice == "1":
-        success = random.random() < 0.6
-        if success:
+        if random.random() < 0.6:
             gained = random.randint(200, 800)
             fuel += gained
-            print(f"✅ Asteroid mining successful! +{gained} fuel")
+            print(f"✅ +{gained} fuel")
         else:
             damage = random.randint(50, 200)
             fuel = max(0, fuel - damage)
-            print(f"💥 Asteroid mining failed! Lost {damage} fuel")
-            
+            print(f"💥 Lost {damage} fuel")
     elif choice == "2":
         cost_per_unit = 2
-        print(f"💰 Fuel price: {cost_per_unit} credits per unit")
         amount = int(input("How much fuel to buy? "))
-        total_cost = amount * cost_per_unit
-        if credits_total >= total_cost:
-            credits_total -= total_cost
+        if credits_total >= amount * cost_per_unit:
+            credits_total -= amount * cost_per_unit
             fuel += amount
-            print(f"✅ Bought {amount} fuel! Remaining credits: {credits_total}")
+            print(f"✅ Bought {amount} fuel!")
         else:
             print("❌ Not enough credits!")
-            collect_emergency_fuel()
-            
     elif choice == "3":
-        bet = int(input("How many credits to gamble? "))
+        bet = int(input("Bet credits: "))
         if bet > credits_total:
             print("Not enough credits!")
             return
-        roll = random.randint(1, 100)
-        if roll > 70:
+        if random.random() > 0.7:
             winnings = bet * random.uniform(1.5, 3)
             credits_total += winnings
             fuel += random.randint(100, 400)
-            print(f"🎉 YOU WIN! +{winnings:.0f} credits and +{fuel} fuel!")
+            print(f"🎉 WIN! +{winnings:.0f} credits and fuel!")
         else:
             credits_total -= bet
-            print(f"💀 You lost {bet} credits... Better luck next time!")
+            print(f"💀 Lost {bet} credits!")
 
-# NEW: Alien trading system
 def alien_trade():
     global credits_total, inventory
     print("\n🛸 ALIEN TRADING POST 🛸")
-    print(f"💰 Your credits: {credits_total}")
-    print("\nAvailable items:")
-    
+    print(f"💰 Credits: {credits_total}")
     items_list = list(alien_items.items())
     for i, (item, price) in enumerate(items_list, 1):
         print(f"{i}. {item} - {price} credits")
     
-    choice = input("Buy item (number) or 'quit': ")
+    choice = input("Buy (number) or 'quit': ")
     if choice.isdigit() and 1 <= int(choice) <= len(items_list):
         item, price = items_list[int(choice)-1]
         if credits_total >= price:
             credits_total -= price
             inventory.append(item)
-            print(f"✨ You bought {item}! ✨")
+            print(f"✨ Bought {item}!")
             check_achievement("alien_friend")
         else:
-            print("❌ Not enough credits!")
-    elif choice.lower() == 'quit':
-        print("👋 Safe travels!")
+            print("❌ Need more credits!")
 
-# NEW: Nebula exploration for fuel
 def explore_nebula():
     global fuel, achievements
-    print("\n🌌 NEBULA EXPLORATION MODE 🌌")
-    print("Nearby nebulae:")
+    print("\n🌌 NEBULA EXPLORATION")
     neb_list = list(nebulae.items())
-    for i, (name, coords) in enumerate(neb_list, 1):
-        print(f"{i}. {name} at {coords}")
+    for i, (name, coords) in enumerate(neb_list[:3], 1):  # Show first 3
+        print(f"{i}. {name}")
     
-    choice = input("Explore nebula (number) or 'quit': ")
-    if choice.isdigit() and 1 <= int(choice) <= len(neb_list):
+    choice = input("Explore (number) or 'quit': ")
+    if choice.isdigit() and 1 <= int(choice) <= 3:
         neb_name, coords = neb_list[int(choice)-1]
         print(f"\n🚀 Warping to {neb_name}...")
         time.sleep(1)
         
-        # Calculate distance from current position (assuming origin for simplicity)
-        distance = calculate_distance((0,0), coords)
-        print(f"Distance traveled: {distance:.0f} million km")
-        
-        # Random nebula event
-        event_roll = random.random()
-        if event_roll < 0.7:
+        if random.random() < 0.7:
             fuel_gained = random.randint(300, 1500)
             fuel += fuel_gained
-            print(f"⛽ Collected {fuel_gained} fuel from the nebula!")
+            print(f"⛽ Collected {fuel_gained} fuel!")
             check_achievement("fuel_hunter")
-        elif event_roll < 0.9:
-            artifact = random.choice(["ancient alien artifact", "crystal shard", "energy core"])
-            inventory.append(artifact)
-            print(f"🔮 Found {artifact}! Added to inventory.")
         else:
-            damage = random.randint(100, 400)
-            fuel = max(0, fuel - damage)
-            print(f"⚠️ Nebula storm damaged your ship! Lost {damage} fuel")
+            artifact = random.choice(["ancient artifact", "crystal", "energy core"])
+            inventory.append(artifact)
+            print(f"🔮 Found {artifact}!")
 
-# NEW: Achievement checker
-def check_achievement(achievement_key):
-    global achievements
-    achievement_name = achievement_list.get(achievement_key)
-    if achievement_name and achievement_key not in achievements:
-        achievements.append(achievement_key)
-        print(f"\n🏆 ACHIEVEMENT UNLOCKED: {achievement_name} 🏆")
-
-# NEW: Daily bonus system
-def daily_bonus():
-    global credits_total, fuel
-    print("\n🎁 DAILY LOGIN BONUS 🎁")
-    bonus_credits = random.randint(200, 800)
-    bonus_fuel = random.randint(100, 300)
-    credits_total += bonus_credits
-    fuel += bonus_fuel
-    print(f"✨ +{bonus_credits} credits")
-    print(f"✨ +{bonus_fuel} fuel")
-    print("Thanks for playing space commander!")
-
-# NEW: Space race challenge
 def space_race():
     global credits_total, fuel
     print("\n🏁 SPACE RACE CHALLENGE 🏁")
     print("Race from Earth to Mars!")
-    distance = calculate_distance((0,0), (225,0))
-    print(f"Race distance: {distance} million km")
     
-    start_time = time.time()
-    input("Press ENTER when ready to start the race!")
+    input("Press ENTER when ready...")
     print("3... 2... 1... GO! 🚀")
     
-    # Simple reaction game
-    reaction_time = random.uniform(0.5, 2.0)
-    time.sleep(reaction_time)
+    # Random delay before green light
+    time.sleep(random.uniform(0.5, 2.0))
     print("🟢 GO NOW!")
-    start_race = time.time()
+    start = time.time()
     input()
-    end_time = time.time()
+    reaction = time.time() - start
     
-    race_time = end_time - start_race
-    print(f"Your time: {race_time:.2f} seconds")
+    print(f"Your time: {reaction:.2f} seconds")
     
-    if race_time < 0.5:
+    if reaction < 0.5:
         winnings = 1000
-        print(f"🏆 AMAZING! You win {winnings} credits!")
+        print(f"🏆 AMAZING! +{winnings} credits!")
         credits_total += winnings
         check_achievement("speed_demon")
-    elif race_time < 1.0:
+    elif reaction < 1.0:
         winnings = 500
-        print(f"👍 Good job! You win {winnings} credits!")
+        print(f"👍 Good job! +{winnings} credits!")
         credits_total += winnings
     else:
-        print("😅 Keep practicing commander!")
+        print("😅 Keep practicing!")
+
+def check_achievement(achievement_key):
+    global achievements
+    if achievement_key in achievement_list and achievement_key not in achievements:
+        achievements.append(achievement_key)
+        print(f"\n🏆 ACHIEVEMENT: {achievement_list[achievement_key]} 🏆\n")
+
+def daily_bonus():
+    global credits_total, fuel
+    print("\n🎁 DAILY BONUS! 🎁")
+    bonus_credits = random.randint(200, 800)
+    bonus_fuel = random.randint(100, 300)
+    credits_total += bonus_credits
+    fuel += bonus_fuel
+    print(f"✨ +{bonus_credits} credits | +{bonus_fuel} fuel")
 
 def show_fun_fact():
     facts = ["Venus spins backwards","Mars sunsets are blue","Saturn could float in water","Jupiter is insanely huge","Neptune has crazy strong winds","A day on Venus is longer than a year there"]
-    print(f"\n📚 fun fact: {random.choice(facts)}")
+    print(f"\n📚 {random.choice(facts)}")
 
 def show_space_event():
-    events = ["☄️ comet detected nearby","🌠 meteor shower active","🛰️ signal received from deep space","👽 aliens definitely watching","🪐 strange rings detected nearby"]
+    events = ["☄️ comet nearby","🌠 meteor shower","🛰️ deep space signal","👽 aliens watching","🪐 strange rings"]
     print(f"✨ {random.choice(events)}")
 
 def random_space_weather():
-    weather = ["☀️ solar activity calm today","🌌 radiation levels normal","☄️ asteroid traffic kinda high rn","🛰️ satellites working fine","⚡ solar storm warning active"]
-    print(f"\n🌦️ space weather: {random.choice(weather)}")
+    weather = ["☀️ solar calm","🌌 radiation normal","☄️ asteroid traffic high","🛰️ satellites fine","⚡ solar storm warning"]
+    print(f"\n🌦️ {random.choice(weather)}")
 
 def mission_status():
-    missions = ["✅ mission completed successfully","🚀 navigation systems online","⚠️ fuel levels questionable","🌌 deep space systems stable"]
+    missions = ["✅ mission complete","🚀 nav online","⚠️ fuel questionable","🌌 systems stable"]
     print(f"📡 {random.choice(missions)}")
 
 def detect_black_hole():
-    chance = random.randint(1,12)
-    if chance==1:
-        print("🕳️ ⚠️ BLACK HOLE DETECTED NEARBY! EVASIVE MANEUVERS! ⚠️")
+    if random.randint(1,12) == 1:
+        print("🕳️ ⚠️ BLACK HOLE NEARBY! ⚠️")
         global fuel
         fuel -= random.randint(50, 200)
-        print(f"⛽ Evasive maneuvers cost {min(50, fuel)} fuel!")
     else:
-        print("✅ no black holes nearby")
+        print("✅ No black holes")
 
 def oxygen_level():
-    oxygen = random.randint(70,100)
-    print(f"🫁 oxygen levels: {oxygen}%")
+    print(f"🫁 Oxygen: {random.randint(70,100)}%")
 
 def random_rank(distance):
-    if distance>5000: print("🏆 rank: intergalactic traveler ✨")
-    elif distance>3000: print("🏆 rank: galaxy traveler 🌌")
-    elif distance>1000: print("🏆 rank: space explorer 🚀")
-    elif distance>300: print("🏆 rank: orbit runner 🏃")
-    else: print("🏆 rank: moon walker 🌙")
+    if distance>5000: print("🏆 Intergalactic Traveler")
+    elif distance>3000: print("🏆 Galaxy Traveler")
+    elif distance>1000: print("🏆 Space Explorer")
+    elif distance>300: print("🏆 Orbit Runner")
+    else: print("🏆 Moon Walker")
 
-def random_galaxy(): print(f"🌌 nearby galaxy detected: {random.choice(galaxy_names)}")
-def random_astronaut(): print(f"👨‍🚀 astronaut online: {random.choice(astronauts)}")
-def random_spaceship(): print(f"🛸 active spaceship: {random.choice(spaceships)}")
+def random_galaxy(): print(f"🌌 Galaxy: {random.choice(galaxy_names)}")
+def random_astronaut(): print(f"👨‍🚀 Astronaut: {random.choice(astronauts)}")
+def random_spaceship(): print(f"🛸 Ship: {random.choice(spaceships)}")
 
 def distance_category(distance):
-    if distance<100: print("📍 category: super short trip")
-    elif distance<1000: print("📍 category: medium trip")
-    elif distance<3000: print("📍 category: long trip")
-    else: print("📍 category: extreme space travel")
+    if distance<100: print("📍 Short trip")
+    elif distance<1000: print("📍 Medium trip")
+    elif distance<3000: print("📍 Long trip")
+    else: print("📍 Extreme travel")
 
 def random_signal():
-    signals = ["📡 strange radio signal detected","📡 signal strength stable","📡 communication delay increased","📡 deep space signal lost briefly"]
+    signals = ["📡 Strange signal","📡 Signal stable","📡 Communication delay","📡 Signal lost"]
     print(random.choice(signals))
 
 def moon_phase():
-    phases = ["🌕 full moon tonight","🌗 half moon detected","🌑 new moon phase active","🌙 crescent moon visible"]
+    phases = ["🌕 Full moon","🌗 Half moon","🌑 New moon","🌙 Crescent moon"]
     print(random.choice(phases))
 
 def crew_mood():
-    moods = ["😄 crew feeling great","😴 crew tired but working","🤖 robots handling repairs","🧑‍🚀 crew excited for mission"]
+    moods = ["😄 Crew great","😴 Crew tired","🤖 Robots working","🧑‍🚀 Crew excited"]
     print(random.choice(moods))
 
-def temperature_check(): print(f"🌡️ nearby temperature: {random.randint(-150,120)}°C")
-def danger_level(): print(random.choice(["🟢 danger level: low","🟡 danger level: medium","🟠 danger level: high","🔴 danger level: critical"]))
-def daily_space_tip(): print(random.choice(["💡 tip: always double check coordinates","💡 tip: keep fuel above 30%","💡 tip: avoid black holes if possible","💡 tip: deep space signals can be delayed","💡 tip: nebulae are great for fuel collection"]))
+def temperature_check(): print(f"🌡️ Temp: {random.randint(-150,120)}°C")
+def danger_level(): print(random.choice(["🟢 Low danger","🟡 Medium","🟠 High","🔴 Critical"]))
+def daily_space_tip(): print(random.choice(["💡 Double-check coordinates","💡 Keep fuel above 30%","💡 Avoid black holes","💡 Nebulae = fuel"]))
 def random_space_pet(): 
     pet = random.choice(space_pets)
-    print(f"🐾 companion detected: {pet}")
-    if random.random() < 0.1:  # 10% chance to adopt
+    print(f"🐾 Pet: {pet}")
+    if random.random() < 0.1:
         inventory.append(pet)
         print(f"🎉 {pet} joined your crew!")
         check_achievement("pet_lover")
 def random_badge(): 
     badge = random.choice(badges)
-    print(f"🎖️ badge earned: {badge}")
-    if len([b for b in achievements if "badge" in b]) >= 5:
-        check_achievement("badge_collector")
-def signal_strength(): print(f"📶 signal strength: {random.randint(40,100)}%")
-def credits_display(): print(f"💰 space credits: {credits_total}")
-def asteroid_scan(): 
-    asteroids = random.randint(0,12)
-    print(f"🪨 asteroids nearby: {asteroids}")
-    if asteroids > 8:
-        print("⚠️ Heavy asteroid field! Be careful!")
+    print(f"🎖️ Badge: {badge}")
+def signal_strength(): print(f"📶 Signal: {random.randint(40,100)}%")
+def credits_display(): print(f"💰 Credits: {credits_total}")
+def asteroid_scan(): print(f"🪨 Asteroids: {random.randint(0,12)}")
 def alien_encounter(): 
-    if random.randint(1,5)==1:
-        alien = random.choice(alien_names)
-        print(f"👽 ALIEN ENCOUNTER with {alien}!")
+    if random.randint(1,5) == 1:
+        print(f"👽 ALIEN: {random.choice(alien_names)} wants to trade!")
         alien_trade()
     else:
-        print("👽 no aliens contacted today")
-def space_food(): print(f"🍔 crew meal today: {random.choice(space_foods)}")
-def engine_status(): print(random.choice(["🛠️ engines running perfectly","⚠️ engine heat slightly high","🚀 boosters ready","🔧 engine maintenance recommended"]))
-def warp_drive(): print(f"💫 warp drive power: {random.randint(10,100)}%")
-def random_space_job(): print(f"🧑‍🚀 current crew role: {random.choice(space_jobs)}")
-def planet_condition(): print(f"🪐 planet scan: {random.choice(planet_conditions)}")
-def shield_status(): print(f"🛡️ shield power: {random.randint(20,100)}%")
-def laser_power(): print(f"🔫 laser system power: {random.randint(10,100)}%")
-def gravity_level(): print(f"🌍 gravity level: {round(random.uniform(0.2,5.0),2)}G")
+        print("👽 No aliens")
+def space_food(): print(f"🍔 Meal: {random.choice(space_foods)}")
+def engine_status(): print(random.choice(["🛠️ Engines perfect","⚠️ Engine heat high","🚀 Boosters ready","🔧 Maintenance needed"]))
+def warp_drive(): print(f"💫 Warp: {random.randint(10,100)}%")
+def random_space_job(): print(f"🧑‍🚀 Role: {random.choice(space_jobs)}")
+def planet_condition(): print(f"🪐 Planet: {random.choice(planet_conditions)}")
+def shield_status(): print(f"🛡️ Shields: {random.randint(20,100)}%")
+def laser_power(): print(f"🔫 Lasers: {random.randint(10,100)}%")
+def gravity_level(): print(f"🌍 Gravity: {round(random.uniform(0.2,5.0),2)}G")
 
 def show_all_fluff(distance):
-    """Show all the fun random space info after a calculation"""
     print("\n" + "="*50)
     random_space_weather()
     show_space_event()
@@ -409,68 +421,61 @@ def show_all_fluff(distance):
     print("="*50)
 
 def show_stats_dashboard():
-    """NEW: Cool stats dashboard"""
     print("\n" + "="*50)
-    print("🚀 SPACE COMMANDER STATS DASHBOARD 🚀")
+    print("🚀 SPACE COMMANDER STATS 🚀")
     print("="*50)
-    print(f"📊 Total calculations: {total_calculations}")
-    print(f"📜 Saved history count: {len(history)}")
-    print(f"🏆 Highest distance: {highest_distance:.2f} million km")
-    print(f"🚀 Missions completed: {missions_completed}")
-    print(f"⛽ Current fuel: {fuel:.1f} units")
-    print(f"💰 Total credits: {credits_total}")
+    print(f"📊 Missions: {total_calculations}")
+    print(f"📜 History: {len(history)}")
+    print(f"🏆 Record: {highest_distance:.2f} million km")
+    print(f"🚀 Complete: {missions_completed}")
+    print(f"⛽ Fuel: {fuel:.1f}")
+    print(f"💰 Credits: {credits_total}")
     print(f"🎖️ Achievements: {len(achievements)}/{len(achievement_list)}")
-    print(f"🎒 Inventory items: {len(inventory)}")
+    print(f"🎒 Items: {len(inventory)}")
+    print(f"🔥 Streak: {consecutive_missions}")
+    show_crew_status()
     
     if inventory:
-        print("\n🎒 INVENTORY:")
-        for item in inventory[-5:]:  # Show last 5 items
+        print("\n🎒 Recent items:")
+        for item in inventory[-3:]:
             print(f"  • {item}")
     
     if achievements:
-        print("\n🏆 UNLOCKED ACHIEVEMENTS:")
-        for ach in achievements[-5:]:
+        print("\n🏆 Achievements:")
+        for ach in achievements[-3:]:
             print(f"  • {achievement_list[ach]}")
-    
     print("="*50)
 
 def main():
-    global total_calculations, highest_distance, missions_completed, fuel, credits_total
+    global total_calculations, highest_distance, missions_completed, fuel, credits_total, crew_morale
     
     print("\n" + "🌌" * 20)
-    print("🚀 SPACE DISTANCE CALCULATOR - ULTIMATE EDITION 🚀")
+    print("🚀 SPACE CALCULATOR - TODAY'S EDITION 🚀")
     print("🌌" * 20)
-    print(random.choice(["space calculator v13 ready","doing questionable space math","probably accurate enough","welcome back commander","time to explore the cosmos!"]))
+    print(random.choice(["Ready for launch!","Space awaits!","Calculate the stars!","Mission control ready!"]))
     
     today = datetime.now()
-    print(f"📅 date: {today.strftime('%Y-%m-%d')} 🕒 time: {today.strftime('%H:%M:%S')}")
+    print(f"📅 {today.strftime('%Y-%m-%d')} 🕒 {today.strftime('%H:%M:%S')}")
     
-    # Daily bonus on first run
     daily_bonus()
+    show_crew_status()
     
     while True:
-        print("\n" + "="*40)
+        print("\n" + "="*35)
         print("MAIN MENU")
-        print("="*40)
-        print("1️⃣  Calculate planet distance")
-        print("2️⃣  Calculate custom coordinates")
-        print("3️⃣  View mission history")
-        print("4️⃣  View stats dashboard")
-        print("5️⃣  Clear history")
-        print("6️⃣  🌌 Explore Nebula (collect fuel)")
-        print("7️⃣  🛸 Alien Trading Post")
-        print("8️⃣  🏁 Space Race Challenge")
-        print("9️⃣  🎒 View inventory")
-        print("0️⃣  Exit game")
+        print("="*35)
+        print("1️⃣  Planets | 2️⃣  Custom")
+        print("3️⃣  History | 4️⃣  Stats")
+        print("5️⃣  Clear | 6️⃣  Nebula")
+        print("7️⃣  Trade | 8️⃣  Race")
+        print("9️⃣  Inventory | 0️⃣  Exit")
         
-        mode = input("\nSelect option: ").strip()
+        mode = input("\n➡️ ")
         
         if mode == "3":
-            print("\n📜 MISSION HISTORY:" if history else "📜 No history yet")
-            for item in history[-10:]:  # Show last 10 entries
+            print("\n📜 HISTORY:")
+            for item in history[-8:]:
                 print(f"  {item}")
-            if len(history) > 10:
-                print(f"  ... and {len(history)-10} more missions")
             continue
             
         if mode == "4":
@@ -479,7 +484,7 @@ def main():
             
         if mode == "5":
             history.clear()
-            print("🧹 History cleared!")
+            print("🧹 Cleared!")
             continue
             
         if mode == "6":
@@ -495,87 +500,90 @@ def main():
             continue
             
         if mode == "9":
-            print("\n🎒 YOUR INVENTORY 🎒")
+            print("\n🎒 INVENTORY:")
             if inventory:
-                for item in inventory:
+                for item in inventory[-8:]:
                     print(f"  • {item}")
             else:
-                print("  Empty! Visit alien traders or explore nebulae!")
+                print("  Empty!")
             continue
             
         if mode == "0":
-            print("\n👋 Thanks for playing Space Commander!")
-            print(f"Final stats: {missions_completed} missions | {len(achievements)} achievements | {credits_total} credits")
+            print(f"\n👋 Final: {missions_completed} missions | {len(achievements)} achievements")
             print("🖖 Live long and prosper!")
             break
             
         if mode == "1":
-            # Planet mode with fuel check
             p1_name, p1, p2_name, p2 = choose_planets()
             distance = calculate_distance(p1, p2)
             
-            # Check if we have enough fuel
+            # Random event can modify distance!
+            event_modifier = trigger_random_event()
+            original_distance = distance
+            distance = distance * event_modifier
+            
+            if event_modifier != 1.0:
+                print(f"📏 Distance changed: {original_distance:.0f} → {distance:.0f} million km")
+            
             if not check_fuel(distance):
-                print("❌ Mission aborted due to fuel shortage!")
+                print("❌ Mission aborted!")
+                update_crew_morale(distance, success=False)
                 continue
             
         elif mode == "2":
-            # Custom coordinates mode
-            print("\n✨ CUSTOM LOCATION MODE ✨")
-            p1_name = input("Name of starting location: ") or "Start"
-            p2_name = input("Name of destination: ") or "Destination"
+            print("\n✨ CUSTOM MODE ✨")
+            p1_name = input("Start: ") or "Start"
+            p2_name = input("Dest: ") or "Dest"
             p1 = get_coordinates(p1_name)
             p2 = get_coordinates(p2_name)
             distance = calculate_distance(p1, p2)
             
+            event_modifier = trigger_random_event()
+            if event_modifier != 1.0:
+                distance = distance * event_modifier
+            
             if not check_fuel(distance):
-                print("❌ Mission aborted due to fuel shortage!")
+                print("❌ Mission aborted!")
+                update_crew_morale(distance, success=False)
                 continue
             
         else:
-            print("❌ Invalid option. Choose 0-9")
+            print("❌ Choose 0-9")
             continue
-            
-        # Process the calculation
+        
+        # Mission success!
         total_calculations += 1
         missions_completed += 1
         
-        # Add credits for completing mission
-        credit_reward = int(distance * 0.5) + random.randint(50, 200)
-        credits_total += credit_reward
-        print(f"💰 Mission reward: {credit_reward} credits!")
+        reward = int(distance * 0.5) + random.randint(50, 200)
+        credits_total += reward
+        print(f"💰 +{reward} credits!")
         
         if distance > highest_distance:
             highest_distance = distance
-            print("\n🎉 NEW RECORD DISTANCE! 🎉")
+            print("\n🎉 NEW RECORD! 🎉")
             if distance > 2000:
                 check_achievement("milky_way_tourist")
         
-        print(f"\n{'='*50}")
-        print(f"📍 FROM: {p1_name} {p1}")
-        print(f"📍 TO: {p2_name} {p2}")
-        print(f"📏 DISTANCE: {distance:.2f} million km")
-        print(f"{'='*50}")
+        print(f"\n{'='*45}")
+        print(f"📍 {p1_name} → {p2_name}")
+        print(f"📏 {distance:.2f} million km")
+        print(f"{'='*45}")
         
-        # Store in history
         timestamp = datetime.now().strftime("%H:%M:%S")
-        history_entry = f"[{timestamp}] {p1_name} → {p2_name}: {distance:.2f} million km"
-        history.append(history_entry)
+        history.append(f"[{timestamp}] {p1_name} → {p2_name}: {distance:.2f}M km")
         
-        # Show all the fun space info
         show_all_fluff(distance)
+        update_crew_morale(distance, success=True)
         
-        # Special milestone messages
         if missions_completed == 1:
             check_achievement("first_step")
-        if missions_completed % 10 == 0:
-            print(f"\n🎉 MISSION MILESTONE! {missions_completed} missions completed! 🎉")
+        if missions_completed % 5 == 0:
+            print(f"\n🎉 {missions_completed} missions! 🎉")
             print(random.choice(alien_greetings))
-            print(random.choice(space_jokes))
         
         if credits_total >= 10000:
             check_achievement("millionaire")
-        
         if missions_completed >= 50:
             check_achievement("galaxy_legend")
 
