@@ -8,7 +8,7 @@ import os
 # SPACE DISTANCE CALCULATOR - ULTIMATE EDITION v2.0
 # New today: Space anomalies, research system, bounty hunting, and more!
 
-# ============= GLOBAL VARIABLES =============
+
 history = []
 total_calculations = 0
 highest_distance = 0
@@ -45,7 +45,7 @@ space_jokes = [
 ]
 alien_greetings = ["👽 Blip blop!","👾 Greetings Earthling!","🛸 Take me to your leader!","🛸 Beep boop!","🌌 We come in peace!","✨ Hello from Andromeda!"]
 
-# ============= NEW: SPACE ANOMALIES =============
+
 space_anomalies = {
     "🔄 Time Dilation Field": {
         "description": "Time moves differently here!",
@@ -79,7 +79,6 @@ space_anomalies = {
     }
 }
 
-# ============= NEW: BOUNTY TARGETS =============
 bounty_targets = [
     {"name": "Red Pirate", "bounty": 500, "level": 1, "health": 3},
     {"name": "Shadow Corsair", "bounty": 1000, "level": 2, "health": 5},
@@ -88,7 +87,6 @@ bounty_targets = [
     {"name": "Galactic Menace", "bounty": 10000, "level": 5, "health": 15}
 ]
 
-# ============= RESEARCH UPGRADES =============
 research_upgrades = {
     "Fuel Efficiency": {"cost": 100, "effect": "fuel_consumption", "value": 0.9, "owned": False},
     "Warp Drive": {"cost": 200, "effect": "speed_bonus", "value": 1.2, "owned": False},
@@ -137,7 +135,6 @@ alien_items = {
     "🔭 research data": 400  # NEW
 }
 
-# ============= RANDOM EVENTS =============
 random_events = [
     {"name": "🌀 WORMHOLE!", "effect": "shortcut", "message": "You found a wormhole! Distance reduced by 40%!", "modifier": 0.6},
     {"name": "🏴‍☠️ SPACE PIRATES!", "effect": "danger", "message": "Space pirates attacked! Lost 200 fuel and 100 credits!", "fuel": -200, "credits": -100},
@@ -148,7 +145,6 @@ random_events = [
     {"name": "☄️ COMET FLYBY", "effect": "comet", "message": "A comet is passing by!", "comet": True}  # NEW
 ]
 
-# ============= CORE FUNCTIONS =============
 def calculate_distance(p1, p2):
     return math.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
 
