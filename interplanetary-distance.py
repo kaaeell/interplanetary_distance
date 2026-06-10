@@ -5,8 +5,8 @@ from datetime import datetime
 import json
 import os
 
-# SPACE DISTANCE CALCULATOR - ULTIMATE EDITION v2.0
-# New today: Space anomalies, research system, bounty hunting, and more!
+# SPACE DISTANCE CALCULATOR - ULTIMATE EDITION v2.1
+# New today: Space anomalies, research system, bounty hunting, and CREW SKILL SYSTEM!
 
 
 history = []
@@ -23,6 +23,15 @@ research_points = 0  # NEW: Research system!
 bounty_hunting_level = 1  # NEW: Bounty hunting rank!
 discovered_anomalies = []  # NEW: Space anomalies discovered!
 last_pirate_defeated = None  # NEW: For bounty system
+
+# ============= NEW: CREW SKILL SYSTEM =============
+crew_members = [
+    {"name": "Captain", "skill": "Leadership", "level": 1, "xp": 0, "bonus": "morale"},
+    {"name": "Engineer", "skill": "Mechanics", "level": 1, "xp": 0, "bonus": "fuel_saving"},
+    {"name": "Navigator", "skill": "Astrogation", "level": 1, "xp": 0, "bonus": "distance_bonus"},
+    {"name": "Scientist", "skill": "Research", "level": 1, "xp": 0, "bonus": "rp_bonus"},
+    {"name": "Gunner", "skill": "Combat", "level": 1, "xp": 0, "bonus": "combat_damage"}
+]
 
 # ============= DATA SETS =============
 galaxy_names = ["Milky Way","Andromeda","Sombrero Galaxy","Whirlpool Galaxy","Black Eye Galaxy","Cartwheel Galaxy","Triangulum Galaxy","Pinwheel Galaxy"]
@@ -107,12 +116,13 @@ achievement_list = {
     "galaxy_legend": "⭐ Galaxy Legend - Complete 50 missions",
     "streak_master": "🔥 Streak Master - Complete 5 missions in a row",
     "wormhole_rider": "🌀 Wormhole Rider - Successfully use a wormhole",
-    "anomaly_hunter": "🔭 Anomaly Hunter - Discover 3 space anomalies",  # NEW
-    "bounty_hunter": "💰 Bounty Hunter - Defeat a bounty target",  # NEW
-    "research_genius": "🧠 Research Genius - Unlock 3 research upgrades",  # NEW
-    "space_whisperer": "🐋 Space Whisperer - Find the space whales",  # NEW
-    "comet_chaser": "☄️ Comet Chaser - Track a comet",  # NEW
-    "galactic_hero": "🦸 Galactic Hero - Reach bounty rank 5"  # NEW
+    "anomaly_hunter": "🔭 Anomaly Hunter - Discover 3 space anomalies",
+    "bounty_hunter": "💰 Bounty Hunter - Defeat a bounty target",
+    "research_genius": "🧠 Research Genius - Unlock 3 research upgrades",
+    "space_whisperer": "🐋 Space Whisperer - Find the space whales",
+    "comet_chaser": "☄️ Comet Chaser - Track a comet",
+    "galactic_hero": "🦸 Galactic Hero - Reach bounty rank 5",
+    "crew_trainer": "🎓 Crew Trainer - Get a crew member to level 5"  # NEW
 }
 
 nebulae = {
@@ -121,8 +131,8 @@ nebulae = {
     "Helix Nebula": (695, 280),
     "Crab Nebula": (6500, 190),
     "Tarantula Nebula": (160000, 5000),
-    "Horsehead Nebula": (1500, -300),  # NEW
-    "Cat's Eye Nebula": (3000, 400)  # NEW
+    "Horsehead Nebula": (1500, -300),
+    "Cat's Eye Nebula": (3000, 400)
 }
 
 alien_items = {
@@ -131,8 +141,8 @@ alien_items = {
     "🔮 quantum shield": 1500,
     "🍕 exotic space pizza": 50,
     "🐉 baby space dragon egg": 3000,
-    "📡 anomaly scanner": 800,  # NEW
-    "🔭 research data": 400  # NEW
+    "📡 anomaly scanner": 800,
+    "🔭 research data": 400
 }
 
 random_events = [
@@ -141,8 +151,8 @@ random_events = [
     {"name": "✨ COSMIC CACHE", "effect": "reward", "message": "Found a floating cargo pod! +300 credits and +150 fuel!", "fuel": 150, "credits": 300},
     {"name": "🌊 SOLAR FLARE", "effect": "danger", "message": "Solar flare damaged shields! Lost 100 fuel!", "fuel": -100},
     {"name": "🤝 FRIENDLY ALIENS", "effect": "reward", "message": "Friendly aliens gave you a gift! +250 credits!", "credits": 250},
-    {"name": "📡 MYSTERY SIGNAL", "effect": "anomaly", "message": "Strange signal detected!", "anomaly": True},  # NEW
-    {"name": "☄️ COMET FLYBY", "effect": "comet", "message": "A comet is passing by!", "comet": True}  # NEW
+    {"name": "📡 MYSTERY SIGNAL", "effect": "anomaly", "message": "Strange signal detected!", "anomaly": True},
+    {"name": "☄️ COMET FLYBY", "effect": "comet", "message": "A comet is passing by!", "comet": True}
 ]
 
 def calculate_distance(p1, p2):
@@ -181,7 +191,88 @@ def choose_planets():
     p2_name, p2 = pick("Choose planet 2: ")
     return p1_name, p1, p2_name, p2
 
-# ============= NEW: ANOMALY DISCOVERY SYSTEM =============
+# ============= NEW: CREW SKILL SYSTEM =============
+def show_crew_skills():
+    print("\n👥 CREW SKILL SYSTEM 👥")
+    print("=" * 40)
+    for i, member in enumerate(crew_members, 1):
+        print(f"{i}. {member['name']} - {member['skill']}")
+        print(f"   Level: {member['level']} | XP: {member['xp']}/{(member['level'] * 100)}")
+        print(f"   Bonus: {member['bonus']}")
+        print()
+    
+    print("\n💡 Crew members gain XP from missions!")
+    print("   Higher levels = better bonuses!")
+
+def gain_crew_xp(xp_amount):
+    global credits_total, fuel, research_points
+    
+    for member in crew_members:
+        member['xp'] += xp_amount
+        # Level up check
+        if member['xp'] >= member['level'] * 100:
+            member['xp'] = 0
+            member['level'] += 1
+            print(f"\n🎉 {member['name']} leveled up to level {member['level']}! 🎉")
+            
+            # Special rewards on level up
+            bonus = random.randint(100, 300)
+            credits_total += bonus
+            print(f"💰 Crew celebration! +{bonus} credits!")
+            
+            if member['level'] >= 5:
+                check_achievement("crew_trainer")
+
+def apply_crew_bonus(bonus_type, value):
+    for member in crew_members:
+        if member['bonus'] == bonus_type:
+            bonus_multiplier = 1 + (member['level'] * 0.05)
+            return value * bonus_multiplier
+    return value
+
+def train_crew():
+    global credits_total
+    
+    print("\n📚 CREW TRAINING ACADEMY 📚")
+    print(f"💰 Credits: {credits_total}")
+    print("\nTraining options:")
+    print("1. Basic Training (200 credits) - +30 XP to all crew")
+    print("2. Advanced Training (500 credits) - +80 XP to all crew")
+    print("3. Elite Training (1000 credits) - +200 XP to all crew")
+    print("4. Specialization Course (800 credits) - Double XP for one crew")
+    
+    choice = input("\nChoose training (1-4) or 'quit': ")
+    
+    if choice == "1" and credits_total >= 200:
+        credits_total -= 200
+        gain_crew_xp(30)
+        print("✅ Basic training complete!")
+    elif choice == "2" and credits_total >= 500:
+        credits_total -= 500
+        gain_crew_xp(80)
+        print("✅ Advanced training complete!")
+    elif choice == "3" and credits_total >= 1000:
+        credits_total -= 1000
+        gain_crew_xp(200)
+        print("✅ Elite training complete!")
+    elif choice == "4" and credits_total >= 800:
+        credits_total -= 800
+        print("\nChoose crew member:")
+        for i, member in enumerate(crew_members, 1):
+            print(f"{i}. {member['name']}")
+        sub_choice = input("Select member: ")
+        if sub_choice.isdigit() and 1 <= int(sub_choice) <= len(crew_members):
+            member = crew_members[int(sub_choice)-1]
+            member['xp'] += 100
+            print(f"✅ {member['name']} gained 100 XP!")
+            if member['xp'] >= member['level'] * 100:
+                member['xp'] = 0
+                member['level'] += 1
+                print(f"🎉 {member['name']} leveled up!")
+    else:
+        print("❌ Not enough credits or invalid choice!")
+
+# ============= ANOMALY DISCOVERY SYSTEM =============
 def discover_anomaly():
     global research_points, crew_morale, fuel, credits_total, inventory
     
@@ -213,6 +304,10 @@ def discover_anomaly():
         
     elif anomaly["effect"] == "danger":
         damage = anomaly["damage"]
+        # Apply damage reduction if researched
+        if research_upgrades["Shield Tech"]["owned"]:
+            damage = int(damage * research_upgrades["Shield Tech"]["value"])
+            print(f"🛡️ Shields reduced damage to {damage}!")
         fuel = max(0, fuel - damage)
         print(f"💥 You lost {damage} fuel escaping!")
         
@@ -230,7 +325,7 @@ def discover_anomaly():
         research_points += 30
         print(f"🧠 +30 research points from studying the artifact!")
 
-# ============= NEW: BOUNTY HUNTING SYSTEM =============
+# ============= BOUNTY HUNTING SYSTEM =============
 def bounty_hunting():
     global credits_total, fuel, bounty_hunting_level, last_pirate_defeated
     
@@ -259,12 +354,19 @@ def bounty_hunting():
         player_health = target['health']
         target_health = target['health']
         
+        # Apply gunner bonus
+        gunner_bonus = 1
+        for member in crew_members:
+            if member['bonus'] == 'combat_damage':
+                gunner_bonus = 1 + (member['level'] * 0.1)
+                print(f"🔫 Gunner bonus: +{int((gunner_bonus-1)*100)}% damage!")
+        
         while player_health > 0 and target_health > 0:
             print(f"\n❤️ Your health: {player_health} | {target['name']} health: {target_health}")
             action = input("1. Attack | 2. Dodge | 3. Use item: ")
             
             if action == "1":
-                damage = random.randint(2, 6)
+                damage = int(random.randint(2, 6) * gunner_bonus)
                 target_health -= damage
                 print(f"⚡ You dealt {damage} damage!")
                 
@@ -292,6 +394,7 @@ def bounty_hunting():
             credits_total += reward
             print(f"\n🎉 VICTORY! Defeated {target['name']}!")
             print(f"💰 Claimed {reward} credits!")
+            gain_crew_xp(50)  # Crew gains XP from battle
             
             if target["level"] == bounty_hunting_level:
                 bounty_hunting_level = min(5, bounty_hunting_level + 1)
@@ -304,7 +407,7 @@ def bounty_hunting():
             print(f"\n💀 Defeated by {target['name']}... Lost 200 credits")
             credits_total = max(0, credits_total - 200)
 
-# ============= NEW: RESEARCH SYSTEM =============
+# ============= RESEARCH SYSTEM =============
 def research_lab():
     global research_points, fuel, credits_total
     
@@ -312,25 +415,37 @@ def research_lab():
     print(f"📚 Research Points: {research_points}")
     print("\nAvailable Upgrades:")
     
+    # Apply scientist bonus
+    rp_bonus = 1
+    for member in crew_members:
+        if member['bonus'] == 'rp_bonus':
+            rp_bonus = 1 + (member['level'] * 0.05)
+            print(f"🔬 Scientist bonus: +{int((rp_bonus-1)*100)}% research efficiency!")
+    
     upgrades_list = list(research_upgrades.items())
     for i, (name, data) in enumerate(upgrades_list, 1):
         status = "✅ OWNED" if data["owned"] else f"💰 {data['cost']} RP"
         print(f"{i}. {name} - {status}")
     
     print("\n7. Convert credits to research points (100 credits = 20 RP)")
+    print("8. 🎓 Train Crew")
     
-    choice = input("\nSelect upgrade (number) or 'quit': ")
+    choice = input("\nSelect option (number) or 'quit': ")
     
-    if choice.isdigit() and 1 <= int(choice) <= len(upgrades_list):
+    if choice == "8":
+        train_crew()
+    elif choice.isdigit() and 1 <= int(choice) <= len(upgrades_list):
         upgrade_name, upgrade_data = upgrades_list[int(choice)-1]
         if not upgrade_data["owned"]:
-            if research_points >= upgrade_data["cost"]:
-                research_points -= upgrade_data["cost"]
+            cost = upgrade_data["cost"]
+            if research_points >= cost:
+                research_points -= cost
                 upgrade_data["owned"] = True
                 print(f"✨ Unlocked {upgrade_name}! ✨")
                 check_achievement("research_genius")
+                gain_crew_xp(25)  # Research grants crew XP
             else:
-                print(f"❌ Need {upgrade_data['cost']} research points!")
+                print(f"❌ Need {cost} research points!")
         else:
             print("❌ Already owned!")
             
@@ -342,7 +457,7 @@ def research_lab():
             research_points += rp_gain
             print(f"✨ Converted {amount} credits into {rp_gain} research points!")
 
-# ============= NEW: COMET TRACKING =============
+# ============= COMET TRACKING =============
 def track_comet():
     global credits_total, research_points
     
@@ -351,13 +466,20 @@ def track_comet():
     print(f"Tracking comet {comet}...")
     time.sleep(1)
     
-    # Simple telescope mini-game
+    # Apply navigator bonus for better comet tracking
+    nav_bonus = 1
+    for member in crew_members:
+        if member['bonus'] == 'distance_bonus':
+            nav_bonus = 1 - (member['level'] * 0.02)
+            print(f"🧭 Navigator bonus: Easier tracking!")
+    
     print("\nAdjust your telescope!")
     target_angle = random.randint(0, 360)
     print(f"Target angle: ???")
     
     guess = int(input("Your guess (0-360): "))
     difference = min(abs(guess - target_angle), 360 - abs(guess - target_angle))
+    difference = int(difference * nav_bonus)
     
     if difference < 10:
         reward = 500
@@ -365,6 +487,7 @@ def track_comet():
         print(f"💰 +{reward} credits!")
         credits_total += reward
         research_points += 30
+        gain_crew_xp(40)
         check_achievement("comet_chaser")
     elif difference < 30:
         reward = 200
@@ -372,10 +495,11 @@ def track_comet():
         print(f"💰 +{reward} credits!")
         credits_total += reward
         research_points += 15
+        gain_crew_xp(15)
     else:
         print(f"😅 Missed it! The comet was at {target_angle}°")
 
-# ============= NEW: SAVE/LOAD SYSTEM =============
+# ============= SAVE/LOAD SYSTEM =============
 def save_game():
     save_data = {
         "history": history,
@@ -391,7 +515,8 @@ def save_game():
         "research_points": research_points,
         "bounty_hunting_level": bounty_hunting_level,
         "discovered_anomalies": discovered_anomalies,
-        "research_upgrades_owned": {name: data["owned"] for name, data in research_upgrades.items()}
+        "research_upgrades_owned": {name: data["owned"] for name, data in research_upgrades.items()},
+        "crew_members": crew_members  # NEW: Save crew data
     }
     
     with open("space_save.json", "w") as f:
@@ -401,7 +526,7 @@ def save_game():
 def load_game():
     global history, total_calculations, highest_distance, missions_completed, fuel, credits_total
     global achievements, inventory, crew_morale, consecutive_missions, research_points
-    global bounty_hunting_level, discovered_anomalies
+    global bounty_hunting_level, discovered_anomalies, crew_members
     
     try:
         with open("space_save.json", "r") as f:
@@ -420,6 +545,7 @@ def load_game():
         research_points = save_data.get("research_points", 0)
         bounty_hunting_level = save_data.get("bounty_hunting_level", 1)
         discovered_anomalies = save_data.get("discovered_anomalies", [])
+        crew_members = save_data.get("crew_members", crew_members)
         
         # Load research upgrades
         upgrades_owned = save_data.get("research_upgrades_owned", {})
@@ -437,7 +563,7 @@ def load_game():
 def trigger_random_event():
     global fuel, credits_total, consecutive_missions
     
-    if random.random() < 0.35:  # Increased chance!
+    if random.random() < 0.35:
         event = random.choice(random_events)
         print(f"\n⚠️ EVENT: {event['name']} ⚠️")
         print(event['message'])
@@ -467,7 +593,13 @@ def trigger_random_event():
 def update_crew_morale(distance, success=True):
     global crew_morale, consecutive_missions
     if success:
-        gain = random.randint(5, 15)
+        # Apply leadership bonus
+        leadership_bonus = 1
+        for member in crew_members:
+            if member['bonus'] == 'morale':
+                leadership_bonus = 1 + (member['level'] * 0.05)
+        
+        gain = int(random.randint(5, 15) * leadership_bonus)
         crew_morale = min(100, crew_morale + gain)
         consecutive_missions += 1
         print(f"😊 Crew morale +{gain}! (Now: {crew_morale}%)")
@@ -494,11 +626,16 @@ def show_crew_status():
 def check_fuel(distance):
     global fuel
     # Apply fuel efficiency upgrade if owned
+    fuel_needed = distance * 0.5
     if research_upgrades["Fuel Efficiency"]["owned"]:
-        fuel_needed = distance * 0.5 * research_upgrades["Fuel Efficiency"]["value"]
-        print(f"⛽ Fuel efficiency active! Using {fuel_needed:.1f} instead of {distance * 0.5:.1f}")
-    else:
-        fuel_needed = distance * 0.5
+        fuel_needed = fuel_needed * research_upgrades["Fuel Efficiency"]["value"]
+        print(f"⛽ Fuel efficiency active! Using {fuel_needed:.1f}")
+    
+    # Apply engineer bonus
+    for member in crew_members:
+        if member['bonus'] == 'fuel_saving':
+            fuel_needed = fuel_needed * (1 - (member['level'] * 0.02))
+            print(f"🔧 Engineer saved {int(member['level']*2)}% fuel!")
     
     if fuel < fuel_needed:
         print(f"\n⚠️ INSUFFICIENT FUEL! Need {fuel_needed:.1f}, have {fuel:.1f}")
@@ -566,6 +703,7 @@ def alien_trade():
             credits_total -= price
             inventory.append(item)
             print(f"✨ Bought {item}!")
+            gain_crew_xp(10)
             check_achievement("alien_friend")
         else:
             print("❌ Need more credits!")
@@ -595,125 +733,4 @@ def explore_nebula():
         else:
             artifact = random.choice(["ancient relic", "crystal shard", "energy core", "star chart"])
             inventory.append(artifact)
-            print(f"🔮 Found {artifact}!")
-            research_points += 20
-            print(f"🧠 +20 research points!")
-
-def space_race():
-    global credits_total, fuel
-    print("\n🏁 SPACE RACE CHALLENGE 🏁")
-    print("Race from Earth to Mars!")
-    
-    input("Press ENTER when ready...")
-    print("3... 2... 1...")
-    time.sleep(random.uniform(0.5, 2.0))
-    print("🟢 GO!")
-    start = time.time()
-    input()
-    reaction = time.time() - start
-    
-    print(f"Your time: {reaction:.2f} seconds")
-    
-    if reaction < 0.5:
-        winnings = 1000
-        print(f"🏆 AMAZING! +{winnings} credits!")
-        credits_total += winnings
-        check_achievement("speed_demon")
-    elif reaction < 1.0:
-        winnings = 500
-        print(f"👍 Good! +{winnings} credits!")
-        credits_total += winnings
-    else:
-        print("😅 Keep practicing!")
-
-def check_achievement(achievement_key):
-    global achievements
-    if achievement_key in achievement_list and achievement_key not in achievements:
-        achievements.append(achievement_key)
-        print(f"\n🏆 ACHIEVEMENT: {achievement_list[achievement_key]} 🏆\n")
-
-def daily_bonus():
-    global credits_total, fuel, research_points
-    print("\n🎁 DAILY BONUS! 🎁")
-    bonus_credits = random.randint(200, 800)
-    bonus_fuel = random.randint(100, 300)
-    bonus_rp = random.randint(10, 50)
-    credits_total += bonus_credits
-    fuel += bonus_fuel
-    research_points += bonus_rp
-    print(f"✨ +{bonus_credits} credits | +{bonus_fuel} fuel | +{bonus_rp} RP")
-
-# ============= FLUFF FUNCTIONS =============
-def show_fun_fact():
-    facts = ["Venus spins backwards","Mars sunsets are blue","Saturn could float in water","Jupiter is insanely huge","Neptune has crazy strong winds","A day on Venus is longer than a year there","There's a cloud of alcohol in space","One day on Mercury is 59 Earth days"]
-    print(f"\n📚 {random.choice(facts)}")
-
-def show_space_event():
-    events = ["☄️ comet nearby","🌠 meteor shower","🛰️ deep space signal","👽 aliens watching","🪐 strange rings","✨ shooting star","🌌 galaxy collision far away"]
-    print(f"✨ {random.choice(events)}")
-
-def random_space_weather():
-    weather = ["☀️ solar calm","🌌 radiation normal","☄️ asteroid traffic","🛰️ satellites fine","⚡ solar storm","🌊 gravity wave","🌀 ion storm"]
-    print(f"\n🌦️ {random.choice(weather)}")
-
-def mission_status():
-    missions = ["✅ mission complete","🚀 nav online","⚠️ fuel okay","🌌 systems stable","📡 comms active","⚡ power nominal"]
-    print(f"📡 {random.choice(missions)}")
-
-def detect_black_hole():
-    if random.randint(1, 12) == 1:
-        print("🕳️ ⚠️ BLACK HOLE NEARBY! ⚠️")
-        global fuel
-        fuel -= random.randint(50, 200)
-    else:
-        print("✅ No black holes detected")
-
-def oxygen_level():
-    print(f"🫁 Oxygen: {random.randint(70, 100)}%")
-
-def random_rank(distance):
-    if distance > 5000: print("🏆 Intergalactic Traveler")
-    elif distance > 3000: print("🏆 Galaxy Traveler")
-    elif distance > 1000: print("🏆 Space Explorer")
-    elif distance > 300: print("🏆 Orbit Runner")
-    else: print("🏆 Moon Walker")
-
-def random_galaxy(): print(f"🌌 Galaxy: {random.choice(galaxy_names)}")
-def random_astronaut(): print(f"👨‍🚀 Astronaut: {random.choice(astronauts)}")
-def random_spaceship(): print(f"🛸 Ship: {random.choice(spaceships)}")
-def distance_category(distance):
-    if distance < 100: print("📍 Short trip")
-    elif distance < 1000: print("📍 Medium trip")
-    elif distance < 3000: print("📍 Long trip")
-    else: print("📍 Extreme travel")
-def random_signal(): print(random.choice(["📡 Strange signal","📡 Signal stable","📡 Comms delay","📡 Signal lost"]))
-def moon_phase(): print(random.choice(["🌕 Full moon","🌗 Half moon","🌑 New moon","🌙 Crescent moon"]))
-def crew_mood(): print(random.choice(["😄 Crew happy","😴 Crew tired","🤖 Robots working","🧑‍🚀 Crew excited"]))
-def temperature_check(): print(f"🌡️ Temp: {random.randint(-150, 120)}°C")
-def danger_level(): print(random.choice(["🟢 Low","🟡 Medium","🟠 High","🔴 Critical"]))
-def daily_space_tip(): print(random.choice(["💡 Double-check coordinates","💡 Keep fuel above 30%","💡 Avoid black holes","💡 Nebulae = fuel","💡 Upgrade your ship","💡 Save before risky jumps"]))
-def random_space_pet(): 
-    pet = random.choice(space_pets)
-    print(f"🐾 Pet: {pet}")
-    if random.random() < 0.1:
-        inventory.append(pet)
-        print(f"🎉 {pet} joined your crew!")
-        check_achievement("pet_lover")
-def random_badge(): 
-    badge = random.choice(badges)
-    print(f"🎖️ Badge: {badge}")
-    if len([b for b in achievements if "badge" in b]) >= 5:
-        check_achievement("badge_collector")
-def signal_strength(): print(f"📶 Signal: {random.randint(40, 100)}%")
-def credits_display(): print(f"💰 Credits: {credits_total}")
-def asteroid_scan(): 
-    asteroids = random.randint(0, 15)
-    print(f"🪨 Asteroids: {asteroids}")
-    if asteroids > 10:
-        print("⚠️ Heavy asteroid field!")
-def alien_encounter(): 
-    if random.randint(1, 5) == 1:
-        print(f"👽 ALIEN: {random.choice(alien_names)} wants to trade!")
-        alien_trade()
-    else:
-       
+            print(f"
