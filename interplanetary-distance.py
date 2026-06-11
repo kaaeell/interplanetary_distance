@@ -6,7 +6,7 @@ import json
 import os
 
 # SPACE DISTANCE CALCULATOR - ULTIMATE EDITION v2.1
-# New today: Space anomalies, research system, bounty hunting, and CREW SKILL SYSTEM!
+# New today: Space anomalies, research system, bounty hunting, CREW SKILL SYSTEM, and SPACE STOCK MARKET!
 
 
 history = []
@@ -19,10 +19,10 @@ achievements = []
 inventory = []
 crew_morale = 80
 consecutive_missions = 0
-research_points = 0  # NEW: Research system!
-bounty_hunting_level = 1  # NEW: Bounty hunting rank!
-discovered_anomalies = []  # NEW: Space anomalies discovered!
-last_pirate_defeated = None  # NEW: For bounty system
+research_points = 0
+bounty_hunting_level = 1
+discovered_anomalies = []
+last_pirate_defeated = None
 
 # ============= NEW: CREW SKILL SYSTEM =============
 crew_members = [
@@ -31,6 +31,25 @@ crew_members = [
     {"name": "Navigator", "skill": "Astrogation", "level": 1, "xp": 0, "bonus": "distance_bonus"},
     {"name": "Scientist", "skill": "Research", "level": 1, "xp": 0, "bonus": "rp_bonus"},
     {"name": "Gunner", "skill": "Combat", "level": 1, "xp": 0, "bonus": "combat_damage"}
+]
+
+# ============= NEW: SPACE STOCK MARKET =============
+stock_market = {
+    "Space Fuel": {"price": 100, "volatility": 0.15, "owned": 0},
+    "Dark Matter": {"price": 500, "volatility": 0.25, "owned": 0},
+    "Alien Artifacts": {"price": 300, "volatility": 0.2, "owned": 0},
+    "Quantum Chips": {"price": 200, "volatility": 0.18, "owned": 0},
+    "Nebula Gas": {"price": 80, "volatility": 0.12, "owned": 0}
+}
+
+market_news = [
+    "📰 New mining operation discovered!",
+    "📰 Alien trade routes disrupted!",
+    "📰 Space pirates attacking convoys!",
+    "📰 Research breakthrough announced!",
+    "📰 Government subsidies approved!",
+    "📰 Supply shortage reported!",
+    "📰 Overproduction causing price drop!"
 ]
 
 # ============= DATA SETS =============
@@ -122,7 +141,8 @@ achievement_list = {
     "space_whisperer": "🐋 Space Whisperer - Find the space whales",
     "comet_chaser": "☄️ Comet Chaser - Track a comet",
     "galactic_hero": "🦸 Galactic Hero - Reach bounty rank 5",
-    "crew_trainer": "🎓 Crew Trainer - Get a crew member to level 5"  # NEW
+    "crew_trainer": "🎓 Crew Trainer - Get a crew member to level 5",
+    "stock_master": "📈 Stock Master - Make 5000 profit from stock market"
 }
 
 nebulae = {
@@ -191,7 +211,139 @@ def choose_planets():
     p2_name, p2 = pick("Choose planet 2: ")
     return p1_name, p1, p2_name, p2
 
-# ============= NEW: CREW SKILL SYSTEM =============
+# ============= NEW: SPACE STOCK MARKET =============
+def update_stock_prices():
+    for stock in stock_market.values():
+        change = random.uniform(-stock["volatility"], stock["volatility"])
+        stock["price"] = max(10, int(stock["price"] * (1 + change)))
+        
+        # Random news events affect specific stocks
+        if random.random() < 0.2:
+            news = random.choice(market_news)
+            print(f"\n📢 MARKET NEWS: {news}")
+            
+            if "discovered" in news or "breakthrough" in news:
+                stock["price"] = int(stock["price"] * 1.3)
+                print(f"   Prices surged!")
+            elif "pirates" in news or "shortage" in news:
+                stock["price"] = int(stock["price"] * 1.2)
+                print(f"   Prices increased due to scarcity!")
+            elif "subsidies" in news or "overproduction" in news:
+                stock["price"] = int(stock["price"] * 0.85)
+                print(f"   Prices dropped due to oversupply!")
+
+def space_stock_market():
+    global credits_total
+    
+    print("\n📈 SPACE STOCK MARKET 📈")
+    print(f"💰 Your Credits: {credits_total}")
+    print("\nCurrent Stock Prices:")
+    print("-" * 50)
+    
+    stocks_list = list(stock_market.items())
+    for i, (name, data) in enumerate(stocks_list, 1):
+        print(f"{i}. {name}: {data['price']} credits")
+        if data['owned'] > 0:
+            print(f"   Owned: {data['owned']} shares | Value: {data['owned'] * data['price']} credits")
+    
+    print("\n" + "-" * 50)
+    print("1. Buy shares")
+    print("2. Sell shares")
+    print("3. Update market prices")
+    print("4. View portfolio")
+    print("5. Back to main menu")
+    
+    choice = input("\nChoose option: ")
+    
+    if choice == "1":
+        buy_stocks()
+    elif choice == "2":
+        sell_stocks()
+    elif choice == "3":
+        update_stock_prices()
+        print("✅ Market prices updated!")
+    elif choice == "4":
+        show_portfolio()
+    elif choice == "5":
+        return
+
+def buy_stocks():
+    global credits_total
+    
+    print("\n💰 BUY SHARES")
+    stocks_list = list(stock_market.items())
+    for i, (name, data) in enumerate(stocks_list, 1):
+        print(f"{i}. {name} - {data['price']} credits/share")
+    
+    choice = input("Select stock (number): ")
+    if choice.isdigit() and 1 <= int(choice) <= len(stocks_list):
+        stock_name, stock_data = stocks_list[int(choice)-1]
+        shares = int(input(f"How many shares of {stock_name}? "))
+        cost = shares * stock_data["price"]
+        
+        if credits_total >= cost:
+            credits_total -= cost
+            stock_data["owned"] += shares
+            print(f"✅ Bought {shares} shares of {stock_name} for {cost} credits!")
+            
+            # Scientist gives trading bonus
+            for member in crew_members:
+                if member['bonus'] == 'rp_bonus' and random.random() < 0.3:
+                    bonus = random.randint(10, 50)
+                    research_points += bonus
+                    print(f"🔬 Scientist found trading insights! +{bonus} RP")
+        else:
+            print(f"❌ Need {cost} credits, only have {credits_total}!")
+
+def sell_stocks():
+    global credits_total
+    
+    print("\n💰 SELL SHARES")
+    stocks_list = list(stock_market.items())
+    has_shares = False
+    
+    for i, (name, data) in enumerate(stocks_list, 1):
+        if data['owned'] > 0:
+            has_shares = True
+            print(f"{i}. {name} - Owned: {data['owned']} | Current price: {data['price']}")
+    
+    if not has_shares:
+        print("You don't own any shares!")
+        return
+    
+    choice = input("Select stock to sell (number): ")
+    if choice.isdigit() and 1 <= int(choice) <= len(stocks_list):
+        stock_name, stock_data = stocks_list[int(choice)-1]
+        if stock_data['owned'] > 0:
+            shares = int(input(f"How many shares to sell? (Max: {stock_data['owned']}) "))
+            if shares <= stock_data['owned']:
+                revenue = shares * stock_data['price']
+                credits_total += revenue
+                stock_data['owned'] -= shares
+                print(f"✅ Sold {shares} shares for {revenue} credits!")
+                
+                # Check for profit achievement
+                if revenue - (shares * 100) > 5000:
+                    check_achievement("stock_master")
+            else:
+                print("Not enough shares!")
+        else:
+            print("You don't own that stock!")
+
+def show_portfolio():
+    print("\n📊 YOUR PORTFOLIO")
+    total_value = 0
+    for name, data in stock_market.items():
+        if data['owned'] > 0:
+            value = data['owned'] * data['price']
+            total_value += value
+            print(f"{name}: {data['owned']} shares = {value} credits")
+    
+    print(f"\n💰 Total Portfolio Value: {total_value} credits")
+    print(f"💵 Cash: {credits_total} credits")
+    print(f"📈 Net Worth: {credits_total + total_value} credits")
+
+# ============= CREW SKILL SYSTEM =============
 def show_crew_skills():
     print("\n👥 CREW SKILL SYSTEM 👥")
     print("=" * 40)
@@ -205,7 +357,7 @@ def show_crew_skills():
     print("   Higher levels = better bonuses!")
 
 def gain_crew_xp(xp_amount):
-    global credits_total, fuel, research_points
+    global credits_total, research_points
     
     for member in crew_members:
         member['xp'] += xp_amount
@@ -304,7 +456,6 @@ def discover_anomaly():
         
     elif anomaly["effect"] == "danger":
         damage = anomaly["damage"]
-        # Apply damage reduction if researched
         if research_upgrades["Shield Tech"]["owned"]:
             damage = int(damage * research_upgrades["Shield Tech"]["value"])
             print(f"🛡️ Shields reduced damage to {damage}!")
@@ -327,7 +478,7 @@ def discover_anomaly():
 
 # ============= BOUNTY HUNTING SYSTEM =============
 def bounty_hunting():
-    global credits_total, fuel, bounty_hunting_level, last_pirate_defeated
+    global credits_total, fuel, bounty_hunting_level
     
     print("\n💰 BOUNTY HUNTING SYSTEM 💰")
     print(f"🏆 Your Bounty Rank: {bounty_hunting_level}")
@@ -349,12 +500,10 @@ def bounty_hunting():
         print(f"\n🚀 Hunting {target['name']}...")
         time.sleep(1)
         
-        # Simple combat mini-game
         print("⚔️ COMBAT MODE ⚔️")
         player_health = target['health']
         target_health = target['health']
         
-        # Apply gunner bonus
         gunner_bonus = 1
         for member in crew_members:
             if member['bonus'] == 'combat_damage':
@@ -370,7 +519,6 @@ def bounty_hunting():
                 target_health -= damage
                 print(f"⚡ You dealt {damage} damage!")
                 
-                # Enemy counterattack
                 enemy_damage = random.randint(1, 5)
                 player_health -= enemy_damage
                 print(f"💥 {target['name']} dealt {enemy_damage} damage!")
@@ -394,7 +542,7 @@ def bounty_hunting():
             credits_total += reward
             print(f"\n🎉 VICTORY! Defeated {target['name']}!")
             print(f"💰 Claimed {reward} credits!")
-            gain_crew_xp(50)  # Crew gains XP from battle
+            gain_crew_xp(50)
             
             if target["level"] == bounty_hunting_level:
                 bounty_hunting_level = min(5, bounty_hunting_level + 1)
@@ -415,7 +563,6 @@ def research_lab():
     print(f"📚 Research Points: {research_points}")
     print("\nAvailable Upgrades:")
     
-    # Apply scientist bonus
     rp_bonus = 1
     for member in crew_members:
         if member['bonus'] == 'rp_bonus':
@@ -443,7 +590,7 @@ def research_lab():
                 upgrade_data["owned"] = True
                 print(f"✨ Unlocked {upgrade_name}! ✨")
                 check_achievement("research_genius")
-                gain_crew_xp(25)  # Research grants crew XP
+                gain_crew_xp(25)
             else:
                 print(f"❌ Need {cost} research points!")
         else:
@@ -466,7 +613,6 @@ def track_comet():
     print(f"Tracking comet {comet}...")
     time.sleep(1)
     
-    # Apply navigator bonus for better comet tracking
     nav_bonus = 1
     for member in crew_members:
         if member['bonus'] == 'distance_bonus':
@@ -516,7 +662,8 @@ def save_game():
         "bounty_hunting_level": bounty_hunting_level,
         "discovered_anomalies": discovered_anomalies,
         "research_upgrades_owned": {name: data["owned"] for name, data in research_upgrades.items()},
-        "crew_members": crew_members  # NEW: Save crew data
+        "crew_members": crew_members,
+        "stock_market": stock_market
     }
     
     with open("space_save.json", "w") as f:
@@ -526,7 +673,7 @@ def save_game():
 def load_game():
     global history, total_calculations, highest_distance, missions_completed, fuel, credits_total
     global achievements, inventory, crew_morale, consecutive_missions, research_points
-    global bounty_hunting_level, discovered_anomalies, crew_members
+    global bounty_hunting_level, discovered_anomalies, crew_members, stock_market
     
     try:
         with open("space_save.json", "r") as f:
@@ -546,8 +693,8 @@ def load_game():
         bounty_hunting_level = save_data.get("bounty_hunting_level", 1)
         discovered_anomalies = save_data.get("discovered_anomalies", [])
         crew_members = save_data.get("crew_members", crew_members)
+        stock_market = save_data.get("stock_market", stock_market)
         
-        # Load research upgrades
         upgrades_owned = save_data.get("research_upgrades_owned", {})
         for name, owned in upgrades_owned.items():
             if name in research_upgrades:
@@ -592,145 +739,3 @@ def trigger_random_event():
 
 def update_crew_morale(distance, success=True):
     global crew_morale, consecutive_missions
-    if success:
-        # Apply leadership bonus
-        leadership_bonus = 1
-        for member in crew_members:
-            if member['bonus'] == 'morale':
-                leadership_bonus = 1 + (member['level'] * 0.05)
-        
-        gain = int(random.randint(5, 15) * leadership_bonus)
-        crew_morale = min(100, crew_morale + gain)
-        consecutive_missions += 1
-        print(f"😊 Crew morale +{gain}! (Now: {crew_morale}%)")
-        if consecutive_missions >= 5:
-            check_achievement("streak_master")
-    else:
-        loss = random.randint(10, 25)
-        crew_morale = max(0, crew_morale - loss)
-        consecutive_missions = 0
-        print(f"😞 Crew morale -{loss}! (Now: {crew_morale}%)")
-    
-    if crew_morale > 80:
-        print("🎉 Crew is HYPED! Mission bonus active!")
-    elif crew_morale < 30:
-        print("⚠️ Crew morale critically low! Buy space pizza!")
-
-def show_crew_status():
-    bar_length = 20
-    filled = int(bar_length * crew_morale / 100)
-    bar = "█" * filled + "░" * (bar_length - filled)
-    mood_emoji = "😄" if crew_morale > 70 else "😐" if crew_morale > 40 else "😞"
-    print(f"👥 Morale: [{bar}] {crew_morale}% {mood_emoji}")
-
-def check_fuel(distance):
-    global fuel
-    # Apply fuel efficiency upgrade if owned
-    fuel_needed = distance * 0.5
-    if research_upgrades["Fuel Efficiency"]["owned"]:
-        fuel_needed = fuel_needed * research_upgrades["Fuel Efficiency"]["value"]
-        print(f"⛽ Fuel efficiency active! Using {fuel_needed:.1f}")
-    
-    # Apply engineer bonus
-    for member in crew_members:
-        if member['bonus'] == 'fuel_saving':
-            fuel_needed = fuel_needed * (1 - (member['level'] * 0.02))
-            print(f"🔧 Engineer saved {int(member['level']*2)}% fuel!")
-    
-    if fuel < fuel_needed:
-        print(f"\n⚠️ INSUFFICIENT FUEL! Need {fuel_needed:.1f}, have {fuel:.1f}")
-        collect_emergency_fuel()
-        return check_fuel(distance)
-    else:
-        fuel -= fuel_needed
-        print(f"⛽ Used: {fuel_needed:.1f} | Remaining: {fuel:.1f}")
-        return True
-
-def collect_emergency_fuel():
-    global fuel, credits_total
-    print("\n🔄 EMERGENCY FUEL COLLECTION 🔄")
-    print("1. 🛸 Mine asteroid (risky)")
-    print("2. 💰 Buy fuel")
-    print("3. 🎲 Space casino")
-    
-    choice = input("Choose: ")
-    
-    if choice == "1":
-        if random.random() < 0.6:
-            gained = random.randint(200, 800)
-            fuel += gained
-            print(f"✅ +{gained} fuel")
-        else:
-            damage = random.randint(50, 200)
-            fuel = max(0, fuel - damage)
-            print(f"💥 Lost {damage} fuel")
-    elif choice == "2":
-        cost_per_unit = 2
-        amount = int(input("Amount to buy: "))
-        cost = amount * cost_per_unit
-        if credits_total >= cost:
-            credits_total -= cost
-            fuel += amount
-            print(f"✅ Bought {amount} fuel!")
-        else:
-            print("❌ Not enough credits!")
-    elif choice == "3":
-        bet = int(input("Bet credits: "))
-        if bet > credits_total:
-            print("Not enough!")
-            return
-        if random.random() > 0.7:
-            winnings = bet * random.uniform(1.5, 3)
-            credits_total += winnings
-            fuel += random.randint(100, 400)
-            print(f"🎉 WIN! +{winnings:.0f} credits and fuel!")
-        else:
-            credits_total -= bet
-            print(f"💀 Lost {bet} credits!")
-
-def alien_trade():
-    global credits_total, inventory
-    print("\n🛸 ALIEN TRADING POST 🛸")
-    print(f"💰 Credits: {credits_total}")
-    items_list = list(alien_items.items())
-    for i, (item, price) in enumerate(items_list, 1):
-        print(f"{i}. {item} - {price} credits")
-    
-    choice = input("Buy (number) or 'quit': ")
-    if choice.isdigit() and 1 <= int(choice) <= len(items_list):
-        item, price = items_list[int(choice)-1]
-        if credits_total >= price:
-            credits_total -= price
-            inventory.append(item)
-            print(f"✨ Bought {item}!")
-            gain_crew_xp(10)
-            check_achievement("alien_friend")
-        else:
-            print("❌ Need more credits!")
-
-def explore_nebula():
-    global fuel, achievements, research_points
-    print("\n🌌 NEBULA EXPLORATION")
-    neb_list = list(nebulae.items())
-    for i, (name, coords) in enumerate(neb_list[:5], 1):
-        print(f"{i}. {name}")
-    
-    choice = input("Explore (number) or 'quit': ")
-    if choice.isdigit() and 1 <= int(choice) <= 5:
-        neb_name, coords = neb_list[int(choice)-1]
-        print(f"\n🚀 Warping to {neb_name}...")
-        time.sleep(1)
-        
-        if random.random() < 0.6:
-            fuel_gained = random.randint(300, 1500)
-            fuel += fuel_gained
-            print(f"⛽ Collected {fuel_gained} fuel!")
-            check_achievement("fuel_hunter")
-            
-            # Chance for anomaly in nebula
-            if random.random() < 0.3:
-                discover_anomaly()
-        else:
-            artifact = random.choice(["ancient relic", "crystal shard", "energy core", "star chart"])
-            inventory.append(artifact)
-            print(f"
