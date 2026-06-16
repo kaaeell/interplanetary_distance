@@ -5,10 +5,10 @@ from datetime import datetime
 import json
 import os
 
-# SPACE DISTANCE CALCULATOR - ULTIMATE EDITION v3.1
+# SPACE DISTANCE CALCULATOR - ULTIMATE EDITION v3.2
 # New today: Space anomalies, research system, bounty hunting, CREW SKILL SYSTEM, 
 # SPACE STOCK MARKET, SPACE MINING, DIPLOMATIC RELATIONS, PLANETARY COLONIZATION, 
-# BLACK MARKET, and SPACE RACING LEAGUE!
+# BLACK MARKET, SPACE RACING LEAGUE, and SPACE CASINO!
 
 
 history = []
@@ -26,7 +26,22 @@ bounty_hunting_level = 1
 discovered_anomalies = []
 last_pirate_defeated = None
 
-# ============= NEW: SPACE RACING LEAGUE =============
+# ============= NEW: SPACE CASINO =============
+casino_games = {
+    "Cosmic Slots": {"min_bet": 10, "max_bet": 500, "jackpot": 5000},
+    "Alien Poker": {"min_bet": 20, "max_bet": 1000, "jackpot": 10000},
+    "Roulette": {"min_bet": 5, "max_bet": 300, "jackpot": 3000},
+    "Black Hole Blackjack": {"min_bet": 15, "max_bet": 800, "jackpot": 8000}
+}
+
+casino_stats = {
+    "total_bet": 0,
+    "total_won": 0,
+    "biggest_win": 0,
+    "games_played": 0
+}
+
+# ============= SPACE RACING LEAGUE =============
 race_tracks = [
     {"name": "Asteroid Field Dash", "difficulty": 1, "prize": 300, "record": 60.0},
     {"name": "Saturn's Ring Circuit", "difficulty": 2, "prize": 600, "record": 90.0},
@@ -230,7 +245,9 @@ achievement_list = {
     "diplomat": "🤝 Diplomat - Reach 90+ relation with any faction",
     "colonizer": "🏠 Colonizer - Establish your first colony",
     "smuggler": "🕶️ Smuggler - Successfully use the black market 5 times",
-    "racing_champion": "🏆 Racing Champion - Win 10 space races"
+    "racing_champion": "🏆 Racing Champion - Win 10 space races",
+    "casino_king": "👑 Casino King - Win 10000 credits at the casino",
+    "lucky_streak": "🍀 Lucky Streak - Win 5 casino games in a row"
 }
 
 nebulae = {
@@ -263,7 +280,246 @@ random_events = [
     {"name": "☄️ COMET FLYBY", "effect": "comet", "message": "A comet is passing by!", "comet": True}
 ]
 
-# ============= NEW: SPACE RACING LEAGUE =============
+# ============= NEW: SPACE CASINO =============
+def space_casino():
+    global credits_total, crew_morale
+    
+    print("\n🎰 SPACE CASINO 🎰")
+    print("=" * 50)
+    print(f"💰 Your Credits: {credits_total}")
+    print(f"🎯 Biggest Win: {casino_stats['biggest_win']} credits")
+    print("\nAvailable Games:")
+    
+    games_list = list(casino_games.items())
+    for i, (game, data) in enumerate(games_list, 1):
+        print(f"{i}. {game}")
+        print(f"   Min Bet: {data['min_bet']} | Max Bet: {data['max_bet']} | Jackpot: {data['jackpot']}")
+    
+    print("\n5. View Casino Stats")
+    print("6. Back")
+    
+    choice = input("\nChoose game: ")
+    
+    if choice == "5":
+        view_casino_stats()
+    elif choice.isdigit() and 1 <= int(choice) <= len(games_list):
+        game_name, game_data = games_list[int(choice)-1]
+        play_casino_game(game_name, game_data)
+
+def play_casino_game(game_name, game_data):
+    global credits_total, crew_morale, casino_stats
+    
+    print(f"\n🎮 PLAYING: {game_name} 🎮")
+    print(f"💰 Your Credits: {credits_total}")
+    
+    bet = int(input(f"Enter bet ({game_data['min_bet']}-{game_data['max_bet']}): "))
+    
+    if bet < game_data['min_bet'] or bet > game_data['max_bet']:
+        print("❌ Invalid bet amount!")
+        return
+    
+    if bet > credits_total:
+        print("❌ Not enough credits!")
+        return
+    
+    credits_total -= bet
+    casino_stats['total_bet'] += bet
+    
+    print("\n🔄 Spinning...")
+    time.sleep(1.5)
+    
+    # Different game mechanics
+    if game_name == "Cosmic Slots":
+        result = play_slots(bet, game_data)
+    elif game_name == "Alien Poker":
+        result = play_poker(bet, game_data)
+    elif game_name == "Roulette":
+        result = play_roulette(bet, game_data)
+    elif game_name == "Black Hole Blackjack":
+        result = play_blackjack(bet, game_data)
+    
+    if result > 0:
+        credits_total += result
+        casino_stats['total_won'] += result
+        if result > casino_stats['biggest_win']:
+            casino_stats['biggest_win'] = result
+            print(f"🏆 NEW BIGGEST WIN! 🏆")
+        
+        # Check achievements
+        if casino_stats['total_won'] >= 10000:
+            check_achievement("casino_king")
+        
+        # Check lucky streak (simplified)
+        if casino_stats['games_played'] > 0 and casino_stats['games_played'] % 5 == 0:
+            check_achievement("lucky_streak")
+        
+        # Crew morale boost from winning
+        morale_gain = random.randint(5, 15)
+        crew_morale = min(100, crew_morale + morale_gain)
+        print(f"😊 Crew morale +{morale_gain}! (Now: {crew_morale}%)")
+    else:
+        # Crew morale drop from losing
+        morale_loss = random.randint(5, 10)
+        crew_morale = max(0, crew_morale - morale_loss)
+        print(f"😞 Crew morale -{morale_loss}! (Now: {crew_morale}%)")
+    
+    casino_stats['games_played'] += 1
+    gain_crew_xp(5)
+
+def play_slots(bet, game_data):
+    print("🎰 SPINNING SLOTS...")
+    
+    symbols = ["🍒", "⭐", "🔔", "💎", "7️⃣", "🎰"]
+    results = [random.choice(symbols) for _ in range(3)]
+    
+    print(f"Results: {' '.join(results)}")
+    
+    if results[0] == results[1] == results[2]:
+        if results[0] == "7️⃣":
+            winnings = bet * 50
+            print(f"🎉 JACKPOT! Won {winnings} credits!")
+            return winnings
+        elif results[0] == "💎":
+            winnings = bet * 20
+            print(f"💰 Diamond triple! Won {winnings} credits!")
+            return winnings
+        else:
+            winnings = bet * 5
+            print(f"💰 Triple match! Won {winnings} credits!")
+            return winnings
+    elif results[0] == results[1] or results[1] == results[2] or results[0] == results[2]:
+        winnings = bet * 2
+        print(f"💰 Pair! Won {winnings} credits!")
+        return winnings
+    else:
+        print("❌ No match! You lose!")
+        return 0
+
+def play_poker(bet, game_data):
+    print("♠️ ALIEN POKER ♠️")
+    
+    # Simple poker simulation
+    player_hand = random.randint(1, 13) + random.randint(1, 13) / 100
+    dealer_hand = random.randint(1, 13) + random.randint(1, 13) / 100
+    
+    print(f"Your hand: {int(player_hand)}")
+    print(f"Dealer hand: {int(dealer_hand)}")
+    
+    if player_hand > dealer_hand:
+        winnings = bet * 2
+        print(f"🎉 You win! Won {winnings} credits!")
+        return winnings
+    elif player_hand == dealer_hand:
+        winnings = bet
+        print(f"🤝 Push! Bet returned!")
+        return winnings
+    else:
+        print("❌ You lose!")
+        return 0
+
+def play_roulette(bet, game_data):
+    print("🎡 ROULETTE 🎡")
+    
+    print("\nBet on:")
+    print("1. Red")
+    print("2. Black")
+    print("3. Green (0)")
+    print("4. Even")
+    print("5. Odd")
+    
+    choice = input("Choose your bet type: ")
+    number = random.randint(0, 36)
+    
+    print(f"🎯 Ball landed on: {number}")
+    
+    if choice == "1":  # Red
+        red_numbers = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]
+        if number in red_numbers:
+            winnings = bet * 2
+            print(f"🎉 Red wins! Won {winnings} credits!")
+            return winnings
+        else:
+            print("❌ Not red! You lose!")
+            return 0
+    elif choice == "2":  # Black
+        black_numbers = [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]
+        if number in black_numbers:
+            winnings = bet * 2
+            print(f"🎉 Black wins! Won {winnings} credits!")
+            return winnings
+        else:
+            print("❌ Not black! You lose!")
+            return 0
+    elif choice == "3":  # Green
+        if number == 0:
+            winnings = bet * 35
+            print(f"🎉 GREEN! Won {winnings} credits!")
+            return winnings
+        else:
+            print("❌ Not green! You lose!")
+            return 0
+    elif choice == "4":  # Even
+        if number % 2 == 0 and number != 0:
+            winnings = bet * 2
+            print(f"🎉 Even wins! Won {winnings} credits!")
+            return winnings
+        else:
+            print("❌ Not even! You lose!")
+            return 0
+    elif choice == "5":  # Odd
+        if number % 2 != 0:
+            winnings = bet * 2
+            print(f"🎉 Odd wins! Won {winnings} credits!")
+            return winnings
+        else:
+            print("❌ Not odd! You lose!")
+            return 0
+    else:
+        print("Invalid choice!")
+        return 0
+
+def play_blackjack(bet, game_data):
+    print("🃏 BLACK HOLE BLACKJACK 🃏")
+    
+    # Simple blackjack simulation
+    player_total = random.randint(15, 21)
+    dealer_total = random.randint(14, 20)
+    
+    print(f"Your total: {player_total}")
+    print(f"Dealer total: {dealer_total}")
+    
+    if player_total > 21:
+        print("💀 Bust! You lose!")
+        return 0
+    elif dealer_total > 21:
+        winnings = bet * 2
+        print(f"🎉 Dealer bust! Won {winnings} credits!")
+        return winnings
+    elif player_total > dealer_total:
+        winnings = bet * 2
+        print(f"🎉 You win! Won {winnings} credits!")
+        return winnings
+    elif player_total == dealer_total:
+        winnings = bet
+        print(f"🤝 Push! Bet returned!")
+        return winnings
+    else:
+        print("❌ You lose!")
+        return 0
+
+def view_casino_stats():
+    print("\n🎰 CASINO STATISTICS 🎰")
+    print("=" * 40)
+    print(f"Games Played: {casino_stats['games_played']}")
+    print(f"Total Bet: {casino_stats['total_bet']} credits")
+    print(f"Total Won: {casino_stats['total_won']} credits")
+    print(f"Net Profit: {casino_stats['total_won'] - casino_stats['total_bet']} credits")
+    print(f"Biggest Win: {casino_stats['biggest_win']} credits")
+    if casino_stats['games_played'] > 0:
+        win_rate = (casino_stats['total_won'] / casino_stats['total_bet']) * 100
+        print(f"Win Rate: {win_rate:.1f}%")
+
+# ============= SPACE RACING LEAGUE =============
 def space_racing():
     global credits_total, fuel, crew_morale
     
@@ -301,25 +557,21 @@ def race(track_index):
     print(f"\n🏁 STARTING RACE: {track['name']} 🏁")
     print("=" * 40)
     
-    # Calculate ship performance
     ship_bonus = 1.0
     for member in crew_members:
         if member['bonus'] == 'distance_bonus':
             ship_bonus += member['level'] * 0.05
     
-    # Apply racing upgrades
     for upgrade, data in racing_upgrades.items():
         if data["owned"]:
             ship_bonus += data["bonus"]
             print(f"✅ {upgrade} active! +{int(data['bonus']*100)}% speed")
     
-    # Crew morale affects performance
     morale_bonus = 1 + (crew_morale / 200)
     
     print("\nPress ENTER as fast as you can when you see 'GO!'")
     input("Ready? Press ENTER...")
     
-    # Random countdown
     countdown = random.uniform(1, 4)
     time.sleep(countdown)
     print("🏁 GO! 🏁")
@@ -328,7 +580,6 @@ def race(track_index):
     input()
     reaction_time = time.time() - start_time
     
-    # Calculate race time
     base_time = track['record'] * (0.8 + random.random() * 0.4)
     reaction_penalty = reaction_time * 5
     difficulty_penalty = track['difficulty'] * 3
@@ -340,14 +591,12 @@ def race(track_index):
     print(f"⏱️ Total race time: {race_time:.2f}s")
     print(f"🏆 Track record: {track['record']:.2f}s")
     
-    # Check if won
     if race_time < track['record']:
         print("\n🎉 NEW TRACK RECORD! 🎉")
         track['record'] = race_time
         if race_time < racing_stats['best_time']:
             racing_stats['best_time'] = race_time
         racing_stats['races_won'] += 1
-        
         prize_multiplier = 2
         print(f"🌟 Bonus for beating record! x{prize_multiplier}")
     elif race_time < track['record'] * 1.2:
@@ -367,19 +616,15 @@ def race(track_index):
         racing_stats['total_winnings'] += winnings
         print(f"💰 Won {winnings} credits!")
         
-        # Fuel consumption
         fuel_cost = track['difficulty'] * 30
         fuel = max(0, fuel - fuel_cost)
         print(f"⛽ Race consumed {fuel_cost} fuel")
         
-        # Crew XP gain
         gain_crew_xp(15 * track['difficulty'])
         
-        # Check racing champion achievement
         if racing_stats['races_won'] >= 10:
             check_achievement("racing_champion")
     else:
-        # Repair costs
         repair_cost = track['difficulty'] * 50
         credits_total = max(0, credits_total - repair_cost)
         print(f"🔧 Repairs cost {repair_cost} credits")
@@ -430,258 +675,3 @@ def view_racing_stats():
     else:
         print("  None")
     
-    print("\n📝 Track Records:")
-    for track in race_tracks:
-        print(f"  {track['name']}: {track['record']:.2f}s")
-
-# ============= PLANETARY COLONIZATION =============
-def colonization_system():
-    global credits_total, research_points
-    
-    print("\n🏠 PLANETARY COLONIZATION SYSTEM 🏠")
-    print("=" * 50)
-    
-    print("\nYour Colonies:")
-    if colonies:
-        for colony in colonies:
-            print(f"  🪐 {colony['name']} - Income: {colony['income']}/turn | Population: {colony['population']}")
-    else:
-        print("  No colonies yet!")
-    
-    print("\nAvailable Planets for Colonization:")
-    for i, planet in enumerate(available_planets, 1):
-        if not planet["colonized"]:
-            print(f"{i}. {planet['name']} - Cost: {planet['cost']} credits | Base Income: {planet['income']}/mission")
-            print(f"   Hazards: {', '.join(planet['hazards'])}")
-    
-    print("\n" + "-" * 50)
-    print("1. Establish New Colony")
-    print("2. Upgrade Colonies")
-    print("3. Collect Colony Income")
-    print("4. View Colony Details")
-    print("5. Back to Main Menu")
-    
-    choice = input("\nChoose option: ")
-    
-    if choice == "1":
-        establish_colony()
-    elif choice == "2":
-        upgrade_colonies()
-    elif choice == "3":
-        collect_colony_income()
-    elif choice == "4":
-        view_colony_details()
-
-def establish_colony():
-    global credits_total, research_points
-    
-    print("\n🌍 ESTABLISH NEW COLONY")
-    for i, planet in enumerate(available_planets, 1):
-        if not planet["colonized"]:
-            print(f"{i}. {planet['name']} - {planet['cost']} credits")
-    
-    choice = input("Select planet (number) or 'quit': ")
-    if choice.isdigit() and 1 <= int(choice) <= len(available_planets):
-        planet = available_planets[int(choice)-1]
-        if not planet["colonized"]:
-            if credits_total >= planet["cost"]:
-                credits_total -= planet["cost"]
-                planet["colonized"] = True
-                
-                colony = {
-                    "name": planet["name"],
-                    "income": planet["income"],
-                    "population": 100,
-                    "hazards": planet["hazards"],
-                    "upgrades": []
-                }
-                colonies.append(colony)
-                print(f"✅ Colony established on {planet['name']}!")
-                print(f"🏠 Population: 100 | Income: {planet['income']} credits per collection")
-                check_achievement("colonizer")
-                gain_crew_xp(50)
-            else:
-                print(f"❌ Need {planet['cost']} credits!")
-
-def upgrade_colonies():
-    global credits_total
-    
-    if not colonies:
-        print("No colonies to upgrade!")
-        return
-    
-    print("\n🔧 COLONY UPGRADES")
-    print(f"💰 Credits: {credits_total}")
-    print("\nAvailable Upgrades:")
-    
-    upgrades_list = list(colonization_upgrades.items())
-    for i, (name, data) in enumerate(upgrades_list, 1):
-        status = "✅ OWNED" if data["owned"] else f"💰 {data['cost']} credits"
-        print(f"{i}. {name} - {status} (+{data['bonus']} income)")
-    
-    choice = input("\nSelect upgrade (number) or 'quit': ")
-    if choice.isdigit() and 1 <= int(choice) <= len(upgrades_list):
-        upgrade_name, upgrade_data = upgrades_list[int(choice)-1]
-        if not upgrade_data["owned"]:
-            if credits_total >= upgrade_data["cost"]:
-                credits_total -= upgrade_data["cost"]
-                upgrade_data["owned"] = True
-                
-                for colony in colonies:
-                    colony["income"] += upgrade_data["bonus"]
-                    if upgrade_name not in colony["upgrades"]:
-                        colony["upgrades"].append(upgrade_name)
-                
-                print(f"✅ Purchased {upgrade_name} for all colonies!")
-                print(f"📈 Colony income increased by {upgrade_data['bonus']}!")
-            else:
-                print(f"❌ Need {upgrade_data['cost']} credits!")
-
-def collect_colony_income():
-    global credits_total
-    
-    if not colonies:
-        print("No colonies to collect income from!")
-        return
-    
-    total_income = 0
-    for colony in colonies:
-        hazard_multiplier = 1.0
-        if random.random() < 0.3:
-            hazard = random.choice(colony["hazards"])
-            if hazard == "dust_storms":
-                hazard_multiplier = 0.7
-                print(f"⚠️ Dust storms on {colony['name']} reduced income!")
-            elif hazard == "ice_cracks":
-                hazard_multiplier = 0.8
-                print(f"⚠️ Ice cracks on {colony['name']} caused issues!")
-            elif hazard == "methane_lakes":
-                hazard_multiplier = 0.75
-                print(f"⚠️ Methane lakes on {colony['name']} caused problems!")
-            elif hazard == "alien_wildlife":
-                hazard_multiplier = 0.6
-                print(f"⚠️ Alien wildlife attacked {colony['name']}!")
-            elif hazard == "solar_flares":
-                hazard_multiplier = 0.65
-                print(f"⚠️ Solar flares disrupted {colony['name']}!")
-        
-        income = int(colony["income"] * hazard_multiplier)
-        total_income += income
-        print(f"🪐 {colony['name']}: +{income} credits")
-        colony["population"] += random.randint(5, 20)
-    
-    credits_total += total_income
-    print(f"\n💰 Total Colony Income: {total_income} credits")
-    gain_crew_xp(20)
-
-def view_colony_details():
-    if not colonies:
-        print("No colonies yet!")
-        return
-    
-    print("\n📊 COLONY DETAILS")
-    print("=" * 40)
-    for colony in colonies:
-        print(f"\n🪐 {colony['name']}")
-        print(f"   Population: {colony['population']}")
-        print(f"   Income: {colony['income']} credits/turn")
-        print(f"   Upgrades: {', '.join(colony['upgrades']) if colony['upgrades'] else 'None'}")
-        print(f"   Hazards: {', '.join(colony['hazards'])}")
-
-# ============= BLACK MARKET =============
-def black_market():
-    global credits_total, smuggling_heat, black_market_access, research_points
-    
-    if missions_completed >= 10:
-        black_market_access = True
-    
-    if not black_market_access:
-        print("\n🔒 Black Market is locked! Complete 10 missions to unlock.")
-        return
-    
-    print("\n🕶️ BLACK MARKET 🕶️")
-    print(f"⚠️ Smuggling Heat: {smuggling_heat}/100")
-    print(f"💰 Your Credits: {credits_total}")
-    print("\nAvailable Items:")
-    
-    items_list = list(black_market_items.items())
-    for i, (item, data) in enumerate(items_list, 1):
-        print(f"{i}. {item} - {data['price']} credits")
-        print(f"   Risk: {data['risk']}% | Reward: {data['reward']}")
-    
-    print("\n5. Reduce Heat (500 credits)")
-    print("6. Back")
-    
-    choice = input("\nChoose option: ")
-    
-    if choice == "5":
-        if credits_total >= 500:
-            credits_total -= 500
-            smuggling_heat = max(0, smuggling_heat - 30)
-            print("✅ Heat reduced!")
-        else:
-            print("❌ Not enough credits!")
-    
-    elif choice.isdigit() and 1 <= int(choice) <= len(items_list):
-        item_name, item_data = items_list[int(choice)-1]
-        
-        if credits_total >= item_data["price"]:
-            if random.random() < (item_data["risk"] / 100) + (smuggling_heat / 200):
-                print("\n🚨 CAUGHT BY AUTHORITIES! 🚨")
-                penalty = item_data["price"] * 2
-                credits_total = max(0, credits_total - penalty)
-                smuggling_heat += 40
-                print(f"💸 Fined {penalty} credits!")
-                print(f"🔥 Smuggling heat increased to {smuggling_heat}")
-            else:
-                credits_total -= item_data["price"]
-                smuggling_heat += item_data["risk"] // 5
-                print(f"✅ Successfully acquired {item_name}!")
-                
-                if item_data["reward"] == "research":
-                    research_points += item_data["value"]
-                    print(f"🧠 +{item_data['value']} Research Points!")
-                elif item_data["reward"] == "combat":
-                    inventory.append("illegal_weapon_upgrade")
-                    print(f"⚔️ Combat upgrade added to inventory!")
-                elif item_data["reward"] == "tech":
-                    inventory.append("alien_technology")
-                    print(f"🔧 Alien Technology added to inventory!")
-                elif item_data["reward"] == "special":
-                    credits_total += item_data["value"] * 2
-                    print(f"💰 Sold fragment for {item_data['value'] * 2} credits!")
-                elif item_data["reward"] == "treasure":
-                    treasure = random.randint(300, 800)
-                    credits_total += treasure
-                    print(f"💰 Found treasure worth {treasure} credits!")
-                
-                gain_crew_xp(15)
-                
-                if len([i for i in inventory if "illegal" in i or "alien" in i]) >= 5:
-                    check_achievement("smuggler")
-        else:
-            print("❌ Not enough credits!")
-
-# ============= SPACE MINING =============
-def space_mining():
-    global credits_total, fuel, total_mined
-    
-    print("\n⛏️ SPACE MINING OPERATION ⛏️")
-    print("=" * 40)
-    
-    mining_bonus = 1.0
-    cargo_bonus = 1.0
-    for upgrade, data in mining_upgrades.items():
-        if data["owned"]:
-            if upgrade == "Laser Drill":
-                mining_bonus += data["bonus"]
-                print(f"⚡ Laser Drill active! +{int(data['bonus']*100)}% mining speed!")
-            elif upgrade == "Shield Generator":
-                print(f"🛡️ Shield Generator active! Safer mining!")
-            elif upgrade == "Cargo Expander":
-                cargo_bonus += data["bonus"]
-                print(f"📦 Cargo Expander active! +{int(data['bonus']*100)}% cargo space!")
-    
-    print("\nAvailable mining locations:")
-    resources_list = list(mining_resources.items())
-    for i, (resource
