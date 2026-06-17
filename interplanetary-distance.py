@@ -5,10 +5,10 @@ from datetime import datetime
 import json
 import os
 
-# SPACE DISTANCE CALCULATOR - ULTIMATE EDITION v3.2
+# SPACE DISTANCE CALCULATOR - ULTIMATE EDITION v3.3
 # New today: Space anomalies, research system, bounty hunting, CREW SKILL SYSTEM, 
 # SPACE STOCK MARKET, SPACE MINING, DIPLOMATIC RELATIONS, PLANETARY COLONIZATION, 
-# BLACK MARKET, SPACE RACING LEAGUE, and SPACE CASINO!
+# BLACK MARKET, SPACE RACING LEAGUE, SPACE CASINO, and DAILY CHALLENGES!
 
 
 history = []
@@ -26,7 +26,37 @@ bounty_hunting_level = 1
 discovered_anomalies = []
 last_pirate_defeated = None
 
-# ============= NEW: SPACE CASINO =============
+# ============= NEW: DAILY CHALLENGES =============
+daily_challenges = []
+last_challenge_date = None
+
+challenge_templates = [
+    {"name": "Distance Master", "description": "Travel 500 million km", "goal": 500, "reward": 300, "type": "distance"},
+    {"name": "Fuel Collector", "description": "Collect 1000 fuel", "goal": 1000, "reward": 200, "type": "fuel"},
+    {"name": "Bounty Hunter", "description": "Complete 3 bounties", "goal": 3, "reward": 500, "type": "bounty"},
+    {"name": "Star Explorer", "description": "Visit 5 different planets", "goal": 5, "reward": 400, "type": "planets"},
+    {"name": "Credit Grinder", "description": "Earn 2000 credits", "goal": 2000, "reward": 600, "type": "credits"},
+    {"name": "Research Genius", "description": "Gain 100 research points", "goal": 100, "reward": 350, "type": "research"},
+    {"name": "Race Champion", "description": "Win 2 races", "goal": 2, "reward": 450, "type": "races"},
+    {"name": "Mining Pro", "description": "Mine 30 resources", "goal": 30, "reward": 400, "type": "mining"},
+    {"name": "Colony Builder", "description": "Collect colony income twice", "goal": 2, "reward": 500, "type": "colony"},
+    {"name": "Casino Winner", "description": "Win 1000 credits at casino", "goal": 1000, "reward": 300, "type": "casino"}
+]
+
+daily_progress = {
+    "distance": 0,
+    "fuel": 0,
+    "bounty": 0,
+    "planets": 0,
+    "credits": 0,
+    "research": 0,
+    "races": 0,
+    "mining": 0,
+    "colony": 0,
+    "casino": 0
+}
+
+# ============= SPACE CASINO =============
 casino_games = {
     "Cosmic Slots": {"min_bet": 10, "max_bet": 500, "jackpot": 5000},
     "Alien Poker": {"min_bet": 20, "max_bet": 1000, "jackpot": 10000},
@@ -247,7 +277,8 @@ achievement_list = {
     "smuggler": "🕶️ Smuggler - Successfully use the black market 5 times",
     "racing_champion": "🏆 Racing Champion - Win 10 space races",
     "casino_king": "👑 Casino King - Win 10000 credits at the casino",
-    "lucky_streak": "🍀 Lucky Streak - Win 5 casino games in a row"
+    "lucky_streak": "🍀 Lucky Streak - Win 5 casino games in a row",
+    "challenge_master": "🎯 Challenge Master - Complete 10 daily challenges"
 }
 
 nebulae = {
@@ -280,7 +311,88 @@ random_events = [
     {"name": "☄️ COMET FLYBY", "effect": "comet", "message": "A comet is passing by!", "comet": True}
 ]
 
-# ============= NEW: SPACE CASINO =============
+# ============= DAILY CHALLENGES =============
+def generate_daily_challenges():
+    global daily_challenges, last_challenge_date
+    
+    today = datetime.now().date()
+    
+    if last_challenge_date != today:
+        daily_challenges = []
+        available_templates = challenge_templates.copy()
+        random.shuffle(available_templates)
+        
+        # Select 3 random challenges
+        for template in available_templates[:3]:
+            challenge = template.copy()
+            challenge["progress"] = 0
+            challenge["completed"] = False
+            daily_challenges.append(challenge)
+        
+        last_challenge_date = today
+        # Reset daily progress
+        for key in daily_progress:
+            daily_progress[key] = 0
+
+def show_daily_challenges():
+    generate_daily_challenges()
+    
+    print("\n🎯 DAILY CHALLENGES 🎯")
+    print("=" * 40)
+    print(f"📅 {datetime.now().strftime('%Y-%m-%d')}")
+    
+    if not daily_challenges:
+        print("No challenges available today!")
+        return
+    
+    print("\nToday's Challenges:")
+    completed_count = 0
+    for i, challenge in enumerate(daily_challenges, 1):
+        status = "✅" if challenge["completed"] else "⬜"
+        progress = challenge["progress"]
+        goal = challenge["goal"]
+        print(f"{i}. {status} {challenge['name']}")
+        print(f"   {challenge['description']}")
+        print(f"   Progress: {progress}/{goal} | Reward: {challenge['reward']} credits")
+        if challenge["completed"]:
+            completed_count += 1
+        print()
+    
+    print(f"\nCompleted: {completed_count}/{len(daily_challenges)}")
+    
+    if completed_count == len(daily_challenges):
+        print("🎉 All challenges completed! Great job! 🎉")
+        check_achievement("challenge_master")
+
+def update_daily_progress(challenge_type, amount):
+    generate_daily_challenges()
+    
+    # Update progress for matching challenges
+    for challenge in daily_challenges:
+        if challenge["type"] == challenge_type and not challenge["completed"]:
+            challenge["progress"] = min(challenge["goal"], challenge["progress"] + amount)
+            
+            if challenge["progress"] >= challenge["goal"]:
+                challenge["completed"] = True
+                complete_challenge(challenge)
+
+def complete_challenge(challenge):
+    global credits_total, research_points
+    
+    print(f"\n🎯 CHALLENGE COMPLETED: {challenge['name']} 🎯")
+    print(f"💰 Reward: {challenge['reward']} credits")
+    
+    credits_total += challenge['reward']
+    research_points += challenge['reward'] // 10
+    gain_crew_xp(20)
+    
+    # Bonus for completing all challenges
+    if all(c["completed"] for c in daily_challenges):
+        bonus = 500
+        credits_total += bonus
+        print(f"🌟 Bonus for completing all challenges: +{bonus} credits!")
+
+# ============= SPACE CASINO =============
 def space_casino():
     global credits_total, crew_morale
     
@@ -328,7 +440,6 @@ def play_casino_game(game_name, game_data):
     print("\n🔄 Spinning...")
     time.sleep(1.5)
     
-    # Different game mechanics
     if game_name == "Cosmic Slots":
         result = play_slots(bet, game_data)
     elif game_name == "Alien Poker":
@@ -345,20 +456,16 @@ def play_casino_game(game_name, game_data):
             casino_stats['biggest_win'] = result
             print(f"🏆 NEW BIGGEST WIN! 🏆")
         
-        # Check achievements
+        # Update daily challenge
+        update_daily_progress("casino", result)
+        
         if casino_stats['total_won'] >= 10000:
             check_achievement("casino_king")
         
-        # Check lucky streak (simplified)
-        if casino_stats['games_played'] > 0 and casino_stats['games_played'] % 5 == 0:
-            check_achievement("lucky_streak")
-        
-        # Crew morale boost from winning
         morale_gain = random.randint(5, 15)
         crew_morale = min(100, crew_morale + morale_gain)
         print(f"😊 Crew morale +{morale_gain}! (Now: {crew_morale}%)")
     else:
-        # Crew morale drop from losing
         morale_loss = random.randint(5, 10)
         crew_morale = max(0, crew_morale - morale_loss)
         print(f"😞 Crew morale -{morale_loss}! (Now: {crew_morale}%)")
@@ -398,7 +505,6 @@ def play_slots(bet, game_data):
 def play_poker(bet, game_data):
     print("♠️ ALIEN POKER ♠️")
     
-    # Simple poker simulation
     player_hand = random.randint(1, 13) + random.randint(1, 13) / 100
     dealer_hand = random.randint(1, 13) + random.randint(1, 13) / 100
     
@@ -432,7 +538,7 @@ def play_roulette(bet, game_data):
     
     print(f"🎯 Ball landed on: {number}")
     
-    if choice == "1":  # Red
+    if choice == "1":
         red_numbers = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]
         if number in red_numbers:
             winnings = bet * 2
@@ -441,7 +547,7 @@ def play_roulette(bet, game_data):
         else:
             print("❌ Not red! You lose!")
             return 0
-    elif choice == "2":  # Black
+    elif choice == "2":
         black_numbers = [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]
         if number in black_numbers:
             winnings = bet * 2
@@ -450,7 +556,7 @@ def play_roulette(bet, game_data):
         else:
             print("❌ Not black! You lose!")
             return 0
-    elif choice == "3":  # Green
+    elif choice == "3":
         if number == 0:
             winnings = bet * 35
             print(f"🎉 GREEN! Won {winnings} credits!")
@@ -458,7 +564,7 @@ def play_roulette(bet, game_data):
         else:
             print("❌ Not green! You lose!")
             return 0
-    elif choice == "4":  # Even
+    elif choice == "4":
         if number % 2 == 0 and number != 0:
             winnings = bet * 2
             print(f"🎉 Even wins! Won {winnings} credits!")
@@ -466,7 +572,7 @@ def play_roulette(bet, game_data):
         else:
             print("❌ Not even! You lose!")
             return 0
-    elif choice == "5":  # Odd
+    elif choice == "5":
         if number % 2 != 0:
             winnings = bet * 2
             print(f"🎉 Odd wins! Won {winnings} credits!")
@@ -481,7 +587,6 @@ def play_roulette(bet, game_data):
 def play_blackjack(bet, game_data):
     print("🃏 BLACK HOLE BLACKJACK 🃏")
     
-    # Simple blackjack simulation
     player_total = random.randint(15, 21)
     dealer_total = random.randint(14, 20)
     
@@ -580,98 +685,4 @@ def race(track_index):
     input()
     reaction_time = time.time() - start_time
     
-    base_time = track['record'] * (0.8 + random.random() * 0.4)
-    reaction_penalty = reaction_time * 5
-    difficulty_penalty = track['difficulty'] * 3
-    
-    race_time = base_time + reaction_penalty + difficulty_penalty
-    race_time = race_time / (ship_bonus * morale_bonus)
-    
-    print(f"\n⏱️ Your reaction time: {reaction_time:.3f}s")
-    print(f"⏱️ Total race time: {race_time:.2f}s")
-    print(f"🏆 Track record: {track['record']:.2f}s")
-    
-    if race_time < track['record']:
-        print("\n🎉 NEW TRACK RECORD! 🎉")
-        track['record'] = race_time
-        if race_time < racing_stats['best_time']:
-            racing_stats['best_time'] = race_time
-        racing_stats['races_won'] += 1
-        prize_multiplier = 2
-        print(f"🌟 Bonus for beating record! x{prize_multiplier}")
-    elif race_time < track['record'] * 1.2:
-        print("\n✅ You won the race!")
-        prize_multiplier = 1
-        racing_stats['races_won'] += 1
-    elif race_time < track['record'] * 1.5:
-        print("\n🥈 You placed 2nd!")
-        prize_multiplier = 0.5
-    else:
-        print("\n😔 You lost the race...")
-        prize_multiplier = 0
-    
-    if prize_multiplier > 0:
-        winnings = int(track['prize'] * prize_multiplier)
-        credits_total += winnings
-        racing_stats['total_winnings'] += winnings
-        print(f"💰 Won {winnings} credits!")
-        
-        fuel_cost = track['difficulty'] * 30
-        fuel = max(0, fuel - fuel_cost)
-        print(f"⛽ Race consumed {fuel_cost} fuel")
-        
-        gain_crew_xp(15 * track['difficulty'])
-        
-        if racing_stats['races_won'] >= 10:
-            check_achievement("racing_champion")
-    else:
-        repair_cost = track['difficulty'] * 50
-        credits_total = max(0, credits_total - repair_cost)
-        print(f"🔧 Repairs cost {repair_cost} credits")
-    
-    racing_stats['races_entered'] += 1
-    update_crew_morale(0, prize_multiplier > 0)
-
-def buy_racing_upgrades():
-    global credits_total
-    
-    print("\n🔧 RACING UPGRADE SHOP 🔧")
-    print(f"💰 Credits: {credits_total}")
-    print("\nAvailable upgrades:")
-    
-    upgrades_list = list(racing_upgrades.items())
-    for i, (name, data) in enumerate(upgrades_list, 1):
-        status = "✅ OWNED" if data["owned"] else f"💰 {data['cost']} credits"
-        print(f"{i}. {name} - {status} (+{int(data['bonus']*100)}% speed)")
-    
-    choice = input("\nSelect upgrade (number) or 'quit': ")
-    if choice.isdigit() and 1 <= int(choice) <= len(upgrades_list):
-        upgrade_name, upgrade_data = upgrades_list[int(choice)-1]
-        if not upgrade_data["owned"]:
-            if credits_total >= upgrade_data["cost"]:
-                credits_total -= upgrade_data["cost"]
-                upgrade_data["owned"] = True
-                print(f"✨ Purchased {upgrade_name}! ✨")
-                print(f"⚡ Speed increased by {int(upgrade_data['bonus']*100)}%")
-            else:
-                print(f"❌ Need {upgrade_data['cost']} credits!")
-        else:
-            print("❌ Already owned!")
-
-def view_racing_stats():
-    print("\n🏆 RACING STATISTICS 🏆")
-    print("=" * 40)
-    print(f"Races Entered: {racing_stats['races_entered']}")
-    print(f"Races Won: {racing_stats['races_won']}")
-    print(f"Win Rate: {(racing_stats['races_won']/racing_stats['races_entered']*100) if racing_stats['races_entered'] > 0 else 0:.1f}%")
-    print(f"Best Time: {racing_stats['best_time']:.2f}s")
-    print(f"Total Winnings: {racing_stats['total_winnings']} credits")
-    
-    print("\n🔧 Owned Upgrades:")
-    upgrades_owned = [name for name, data in racing_upgrades.items() if data["owned"]]
-    if upgrades_owned:
-        for upgrade in upgrades_owned:
-            print(f"  ✅ {upgrade}")
-    else:
-        print("  None")
-    
+    base_time =
