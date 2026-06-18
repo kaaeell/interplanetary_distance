@@ -6,9 +6,7 @@ import json
 import os
 
 # SPACE DISTANCE CALCULATOR - ULTIMATE EDITION v3.4
-# New today: Space anomalies, research system, bounty hunting, CREW SKILL SYSTEM, 
-# SPACE STOCK MARKET, SPACE MINING, DIPLOMATIC RELATIONS, PLANETARY COLONIZATION, 
-# BLACK MARKET, SPACE RACING LEAGUE, SPACE CASINO, DAILY CHALLENGES, and PIRATE RAID DEFENSE!
+# Complete version with all features!
 
 
 history = []
@@ -26,7 +24,7 @@ bounty_hunting_level = 1
 discovered_anomalies = []
 last_pirate_defeated = None
 
-# ============= NEW: PIRATE RAID DEFENSE =============
+# ============= PIRATE RAID DEFENSE =============
 pirate_raids = []
 defense_turrets = {
     "Laser Turret": {"owned": False, "cost": 500, "damage": 20},
@@ -222,7 +220,6 @@ space_jokes = [
 ]
 alien_greetings = ["👽 Blip blop!","👾 Greetings Earthling!","🛸 Take me to your leader!","🛸 Beep boop!","🌌 We come in peace!","✨ Hello from Andromeda!"]
 
-
 space_anomalies = {
     "🔄 Time Dilation Field": {
         "description": "Time moves differently here!",
@@ -339,303 +336,309 @@ random_events = [
     {"name": "☄️ COMET FLYBY", "effect": "comet", "message": "A comet is passing by!", "comet": True}
 ]
 
-# ============= PIRATE RAID DEFENSE =============
-def pirate_raid_defense():
-    global credits_total, fuel, crew_morale, pirate_raid_stats
-    
-    print("\n🏴‍☠️ PIRATE RAID DEFENSE SYSTEM 🏴‍☠️")
-    print("=" * 50)
-    print(f"⚔️ Raids Survived: {pirate_raid_stats['raids_survived']}")
-    print(f"⚔️ Raids Defeated: {pirate_raid_stats['raids_defeated']}")
-    print(f"💰 Total Loot: {pirate_raid_stats['total_loot']} credits")
-    
-    print("\n1. Defend Against Raid")
-    print("2. Buy Defense Turrets")
-    print("3. View Defense Stats")
-    print("4. Back")
-    
-    choice = input("\nChoose option: ")
-    
-    if choice == "1":
-        defend_raid()
-    elif choice == "2":
-        buy_defense_turrets()
-    elif choice == "3":
-        view_defense_stats()
+# ============= CORE FUNCTIONS =============
+def calculate_distance(p1, p2):
+    return math.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
 
-def defend_raid():
-    global credits_total, fuel, crew_morale, pirate_raid_stats
+def get_coordinates(name):
+    while True:
+        try:
+            print(f"\nEnter coordinates for {name} (in million km)")
+            x = float(input("x: "))
+            y = float(input("y: "))
+            return (x, y)
+        except ValueError:
+            print("invalid input")
+
+def choose_planets():
+    planets = {
+        1: ("Earth",(0,0)), 2: ("Mars",(225,0)), 3: ("Venus",(108,0)), 4: ("Jupiter",(778,0)),
+        5: ("Saturn",(1427,0)), 6: ("Uranus",(2871,0)), 7: ("Neptune",(4495,0)), 8: ("Mercury",(58,0)),
+        9: ("Pluto",(5906,0)), 10: ("Moon",(1,0))
+    }
+    print("\n📋 Available planets:")
+    for num, (name, _) in planets.items():
+        print(f"{num}. {name}")
+    def pick(msg):
+        while True:
+            try:
+                choice = int(input(msg))
+                if choice in planets:
+                    return planets[choice]
+                else:
+                    print("pick a valid number")
+            except ValueError:
+                print("numbers only")
+    p1_name, p1 = pick("Choose planet 1: ")
+    p2_name, p2 = pick("Choose planet 2: ")
+    return p1_name, p1, p2_name, p2
+
+# ============= ANOMALY DISCOVERY =============
+def discover_anomaly():
+    global research_points, crew_morale, fuel, credits_total, inventory
     
-    # Select raid difficulty based on missions completed
-    max_difficulty = min(missions_completed // 5 + 1, len(raid_difficulties))
-    difficulty_index = random.randint(0, max_difficulty - 1)
-    raid = raid_difficulties[difficulty_index]
+    anomaly_name = random.choice(list(space_anomalies.keys()))
+    anomaly = space_anomalies[anomaly_name]
     
-    print(f"\n⚔️ RAID DETECTED: {raid['name']} ⚔️")
-    print(f"Enemy Health: {raid['health']}")
-    print(f"Enemy Damage: {raid['damage']}")
-    print(f"Potential Loot: {raid['loot']} credits")
+    print(f"\n🔭 ANOMALY DISCOVERED: {anomaly_name} 🔭")
+    print(f"📖 {anomaly['description']}")
     
-    # Calculate defense strength
-    defense_strength = 0
-    defense_health = 100
+    if anomaly_name not in discovered_anomalies:
+        discovered_anomalies.append(anomaly_name)
+        print(f"✨ New anomaly added to discovery log!")
+        if len(discovered_anomalies) >= 3:
+            check_achievement("anomaly_hunter")
     
-    for turret_name, turret_data in defense_turrets.items():
-        if turret_data["owned"]:
-            if "damage" in turret_data:
-                defense_strength += turret_data["damage"]
-                print(f"✅ {turret_name} active! +{turret_data['damage']} damage")
-            elif "defense" in turret_data:
-                defense_health += turret_data["defense"]
-                print(f"✅ {turret_name} active! +{turret_data['defense']} health")
-    
-    # Apply gunner bonus
-    gunner_bonus = 1
-    for member in crew_members:
-        if member['bonus'] == 'combat_damage':
-            gunner_bonus = 1 + (member['level'] * 0.1)
-            print(f"🔫 Gunner bonus: +{int((gunner_bonus-1)*100)}% damage")
-    
-    print("\n⚔️ COMBAT STARTING ⚔️")
-    enemy_health = raid['health']
-    
-    while defense_health > 0 and enemy_health > 0:
-        # Player attacks
-        player_damage = random.randint(10, 30) + defense_strength
-        player_damage = int(player_damage * gunner_bonus)
-        enemy_health -= player_damage
-        print(f"⚡ You dealt {player_damage} damage to the raid!")
+    if anomaly["effect"] == "bonus_research":
+        gain = anomaly["reward"]
+        research_points += gain
+        print(f"🧠 +{gain} research points!")
         
-        if enemy_health <= 0:
-            break
+    elif anomaly["effect"] == "teleport":
+        print("🌀 You've been teleported to a random location!")
         
-        # Enemy attacks
-        enemy_damage = random.randint(5, raid['damage'])
-        # Apply shield research if owned
+    elif anomaly["effect"] == "gift":
+        gain = anomaly["reward"]
+        credits_total += gain
+        print(f"💰 The anomaly gave you {gain} credits!")
+        
+    elif anomaly["effect"] == "danger":
+        damage = anomaly["damage"]
         if research_upgrades["Shield Tech"]["owned"]:
-            enemy_damage = int(enemy_damage * research_upgrades["Shield Tech"]["value"])
-            print(f"🛡️ Shields reduced damage to {enemy_damage}!")
-        defense_health -= enemy_damage
-        print(f"💥 Raid dealt {enemy_damage} damage to your defenses!")
+            damage = int(damage * research_upgrades["Shield Tech"]["value"])
+            print(f"🛡️ Shields reduced damage to {damage}!")
+        fuel = max(0, fuel - damage)
+        print(f"💥 You lost {damage} fuel escaping!")
         
-        time.sleep(0.5)
-    
-    if enemy_health <= 0:
-        print("\n🎉 RAID DEFEATED! 🎉")
-        loot = raid['loot'] * random.uniform(0.8, 1.2)
-        loot = int(loot)
-        credits_total += loot
-        pirate_raid_stats['raids_defeated'] += 1
-        pirate_raid_stats['total_loot'] += loot
-        print(f"💰 Loot collected: {loot} credits!")
-        
-        gain_crew_xp(30)
-        update_daily_progress("pirate", 1)
-        
-        if pirate_raid_stats['raids_defeated'] >= 50:
-            check_achievement("pirate_hunter")
-    else:
-        print("\n💀 Defenses breached! Raid escaped!")
-        repair_cost = random.randint(100, 400)
-        credits_total = max(0, credits_total - repair_cost)
-        print(f"🔧 Repairs cost {repair_cost} credits")
-    
-    pirate_raid_stats['raids_survived'] += 1
-    fuel -= random.randint(20, 60)
-    fuel = max(0, fuel)
-    print(f"⛽ Fuel remaining: {fuel}")
-    
-    # Crew morale effect
-    if enemy_health <= 0:
-        morale_change = random.randint(5, 15)
-        crew_morale = min(100, crew_morale + morale_change)
-        print(f"😊 Crew morale +{morale_change}! (Now: {crew_morale}%)")
-    else:
-        morale_change = random.randint(10, 20)
-        crew_morale = max(0, crew_morale - morale_change)
-        print(f"😞 Crew morale -{morale_change}! (Now: {crew_morale}%)")
+    elif anomaly["effect"] == "morale_boost":
+        gain = anomaly["reward"]
+        crew_morale = min(100, crew_morale + gain)
+        print(f"😊 Crew morale +{gain}! (Now: {crew_morale}%)")
+        if anomaly_name == "🎵 Space Whale Song":
+            check_achievement("space_whisperer")
+            
+    elif anomaly["effect"] == "artifact":
+        artifact = random.choice(["ancient tablet", "crystal skull", "energy orb", "star map"])
+        inventory.append(artifact)
+        print(f"🔮 You found an {artifact}!")
+        research_points += 30
+        print(f"🧠 +30 research points from studying the artifact!")
 
-def buy_defense_turrets():
-    global credits_total
+# ============= BOUNTY HUNTING =============
+def bounty_hunting():
+    global credits_total, fuel, bounty_hunting_level
     
-    print("\n🛡️ DEFENSE TURRET SHOP 🛡️")
-    print(f"💰 Credits: {credits_total}")
-    print("\nAvailable Turrets:")
+    print("\n💰 BOUNTY HUNTING SYSTEM 💰")
+    print(f"🏆 Your Bounty Rank: {bounty_hunting_level}")
     
-    turrets_list = list(defense_turrets.items())
-    for i, (name, data) in enumerate(turrets_list, 1):
-        status = "✅ OWNED" if data["owned"] else f"💰 {data['cost']} credits"
-        stats = []
-        if "damage" in data:
-            stats.append(f"Damage: {data['damage']}")
-        if "defense" in data:
-            stats.append(f"Defense: +{data['defense']}")
-        print(f"{i}. {name} - {status} | {' | '.join(stats)}")
+    available_targets = [t for t in bounty_targets if t["level"] <= bounty_hunting_level + 1]
     
-    choice = input("\nSelect turret (number) or 'quit': ")
-    if choice.isdigit() and 1 <= int(choice) <= len(turrets_list):
-        turret_name, turret_data = turrets_list[int(choice)-1]
-        if not turret_data["owned"]:
-            if credits_total >= turret_data["cost"]:
-                credits_total -= turret_data["cost"]
-                turret_data["owned"] = True
-                print(f"✨ Purchased {turret_name}! ✨")
+    if not available_targets:
+        print("No available bounties at your rank! Complete more missions!")
+        return
+    
+    print("\n🎯 AVAILABLE BOUNTIES:")
+    for i, target in enumerate(available_targets[:3], 1):
+        print(f"{i}. {target['name']} - 💰 {target['bounty']} credits (Level {target['level']})")
+    
+    choice = input("\nSelect bounty (number) or 'quit': ")
+    if choice.isdigit() and 1 <= int(choice) <= len(available_targets[:3]):
+        target = available_targets[int(choice)-1]
+        
+        print(f"\n🚀 Hunting {target['name']}...")
+        time.sleep(1)
+        
+        print("⚔️ COMBAT MODE ⚔️")
+        player_health = target['health']
+        target_health = target['health']
+        
+        gunner_bonus = 1
+        for member in crew_members:
+            if member['bonus'] == 'combat_damage':
+                gunner_bonus = 1 + (member['level'] * 0.1)
+                print(f"🔫 Gunner bonus: +{int((gunner_bonus-1)*100)}% damage!")
+        
+        while player_health > 0 and target_health > 0:
+            print(f"\n❤️ Your health: {player_health} | {target['name']} health: {target_health}")
+            action = input("1. Attack | 2. Dodge | 3. Use item: ")
+            
+            if action == "1":
+                damage = int(random.randint(2, 6) * gunner_bonus)
+                target_health -= damage
+                print(f"⚡ You dealt {damage} damage!")
                 
-                # Check if all turrets owned
-                if all(t["owned"] for t in defense_turrets.values()):
-                    check_achievement("defense_genius")
+                enemy_damage = random.randint(1, 5)
+                player_health -= enemy_damage
+                print(f"💥 {target['name']} dealt {enemy_damage} damage!")
+                
+            elif action == "2":
+                if random.random() < 0.6:
+                    print("🛡️ You dodged the attack!")
+                else:
+                    enemy_damage = random.randint(2, 6)
+                    player_health -= enemy_damage
+                    print(f"💥 Failed to dodge! Took {enemy_damage} damage!")
+                    
+            elif action == "3":
+                print("🩹 Using repair kit...")
+                heal = random.randint(3, 8)
+                player_health = min(target['health'], player_health + heal)
+                print(f"❤️ Restored {heal} health!")
+        
+        if player_health > 0:
+            reward = target['bounty']
+            credits_total += reward
+            print(f"\n🎉 VICTORY! Defeated {target['name']}!")
+            print(f"💰 Claimed {reward} credits!")
+            gain_crew_xp(50)
+            
+            if target["level"] == bounty_hunting_level:
+                bounty_hunting_level = min(5, bounty_hunting_level + 1)
+                print(f"🏆 Bounty rank increased to {bounty_hunting_level}!")
+                
+            check_achievement("bounty_hunter")
+            if bounty_hunting_level >= 5:
+                check_achievement("galactic_hero")
+        else:
+            print(f"\n💀 Defeated by {target['name']}... Lost 200 credits")
+            credits_total = max(0, credits_total - 200)
+
+# ============= RESEARCH LAB =============
+def research_lab():
+    global research_points, fuel, credits_total
+    
+    print("\n🧪 RESEARCH LAB 🧪")
+    print(f"📚 Research Points: {research_points}")
+    print("\nAvailable Upgrades:")
+    
+    rp_bonus = 1
+    for member in crew_members:
+        if member['bonus'] == 'rp_bonus':
+            rp_bonus = 1 + (member['level'] * 0.05)
+            print(f"🔬 Scientist bonus: +{int((rp_bonus-1)*100)}% research efficiency!")
+    
+    upgrades_list = list(research_upgrades.items())
+    for i, (name, data) in enumerate(upgrades_list, 1):
+        status = "✅ OWNED" if data["owned"] else f"💰 {data['cost']} RP"
+        print(f"{i}. {name} - {status}")
+    
+    print("\n7. Convert credits to research points (100 credits = 20 RP)")
+    print("8. 🎓 Train Crew")
+    
+    choice = input("\nSelect option (number) or 'quit': ")
+    
+    if choice == "8":
+        train_crew()
+    elif choice.isdigit() and 1 <= int(choice) <= len(upgrades_list):
+        upgrade_name, upgrade_data = upgrades_list[int(choice)-1]
+        if not upgrade_data["owned"]:
+            cost = upgrade_data["cost"]
+            if research_points >= cost:
+                research_points -= cost
+                upgrade_data["owned"] = True
+                print(f"✨ Unlocked {upgrade_name}! ✨")
+                check_achievement("research_genius")
+                gain_crew_xp(25)
             else:
-                print(f"❌ Need {turret_data['cost']} credits!")
+                print(f"❌ Need {cost} research points!")
         else:
             print("❌ Already owned!")
-
-def view_defense_stats():
-    print("\n📊 DEFENSE STATISTICS 📊")
-    print("=" * 40)
-    print(f"Raids Survived: {pirate_raid_stats['raids_survived']}")
-    print(f"Raids Defeated: {pirate_raid_stats['raids_defeated']}")
-    if pirate_raid_stats['raids_survived'] > 0:
-        win_rate = (pirate_raid_stats['raids_defeated'] / pirate_raid_stats['raids_survived']) * 100
-        print(f"Win Rate: {win_rate:.1f}%")
-    print(f"Total Loot Collected: {pirate_raid_stats['total_loot']} credits")
-    print(f"Total Damage Dealt: {pirate_raid_stats['total_damage_dealt']}")
-    
-    print("\n🛡️ Owned Turrets:")
-    owned = [name for name, data in defense_turrets.items() if data["owned"]]
-    if owned:
-        for turret in owned:
-            print(f"  ✅ {turret}")
-    else:
-        print("  None")
-
-# ============= DAILY CHALLENGES =============
-def generate_daily_challenges():
-    global daily_challenges, last_challenge_date
-    
-    today = datetime.now().date()
-    
-    if last_challenge_date != today:
-        daily_challenges = []
-        available_templates = challenge_templates.copy()
-        random.shuffle(available_templates)
-        
-        for template in available_templates[:4]:  # Increased to 4 challenges
-            challenge = template.copy()
-            challenge["progress"] = 0
-            challenge["completed"] = False
-            daily_challenges.append(challenge)
-        
-        last_challenge_date = today
-        for key in daily_progress:
-            daily_progress[key] = 0
-
-def show_daily_challenges():
-    generate_daily_challenges()
-    
-    print("\n🎯 DAILY CHALLENGES 🎯")
-    print("=" * 40)
-    print(f"📅 {datetime.now().strftime('%Y-%m-%d')}")
-    
-    if not daily_challenges:
-        print("No challenges available today!")
-        return
-    
-    print("\nToday's Challenges:")
-    completed_count = 0
-    for i, challenge in enumerate(daily_challenges, 1):
-        status = "✅" if challenge["completed"] else "⬜"
-        progress = challenge["progress"]
-        goal = challenge["goal"]
-        bar_length = 20
-        filled = int(bar_length * progress / goal)
-        bar = "█" * filled + "░" * (bar_length - filled)
-        print(f"{i}. {status} {challenge['name']}")
-        print(f"   {challenge['description']}")
-        print(f"   Progress: [{bar}] {progress}/{goal}")
-        print(f"   Reward: {challenge['reward']} credits")
-        if challenge["completed"]:
-            completed_count += 1
-        print()
-    
-    print(f"\nCompleted: {completed_count}/{len(daily_challenges)}")
-    
-    if completed_count == len(daily_challenges):
-        print("🎉 All challenges completed! Great job! 🎉")
-        check_achievement("challenge_master")
-
-def update_daily_progress(challenge_type, amount):
-    generate_daily_challenges()
-    
-    for challenge in daily_challenges:
-        if challenge["type"] == challenge_type and not challenge["completed"]:
-            challenge["progress"] = min(challenge["goal"], challenge["progress"] + amount)
             
-            if challenge["progress"] >= challenge["goal"]:
-                challenge["completed"] = True
-                complete_challenge(challenge)
+    elif choice == "7":
+        amount = int(input("How many credits to convert? "))
+        if amount >= 100:
+            rp_gain = (amount // 100) * 20
+            credits_total -= amount
+            research_points += rp_gain
+            print(f"✨ Converted {amount} credits into {rp_gain} research points!")
 
-def complete_challenge(challenge):
+# ============= COMET TRACKING =============
+def track_comet():
     global credits_total, research_points
     
-    print(f"\n🎯 CHALLENGE COMPLETED: {challenge['name']} 🎯")
-    print(f"💰 Reward: {challenge['reward']} credits")
+    print("\n☄️ COMET TRACKING SYSTEM ☄️")
+    comet = random.choice(comet_names)
+    print(f"Tracking comet {comet}...")
+    time.sleep(1)
     
-    credits_total += challenge['reward']
-    research_points += challenge['reward'] // 10
-    gain_crew_xp(20)
+    nav_bonus = 1
+    for member in crew_members:
+        if member['bonus'] == 'distance_bonus':
+            nav_bonus = 1 - (member['level'] * 0.02)
+            print(f"🧭 Navigator bonus: Easier tracking!")
     
-    if all(c["completed"] for c in daily_challenges):
-        bonus = 500
-        credits_total += bonus
-        print(f"🌟 Bonus for completing all challenges: +{bonus} credits!")
+    print("\nAdjust your telescope!")
+    target_angle = random.randint(0, 360)
+    print(f"Target angle: ???")
+    
+    guess = int(input("Your guess (0-360): "))
+    difference = min(abs(guess - target_angle), 360 - abs(guess - target_angle))
+    difference = int(difference * nav_bonus)
+    
+    if difference < 10:
+        reward = 500
+        print(f"🎯 PERFECT! You found comet {comet}!")
+        print(f"💰 +{reward} credits!")
+        credits_total += reward
+        research_points += 30
+        gain_crew_xp(40)
+        check_achievement("comet_chaser")
+    elif difference < 30:
+        reward = 200
+        print(f"👍 Good! You spotted comet {comet}!")
+        print(f"💰 +{reward} credits!")
+        credits_total += reward
+        research_points += 15
+        gain_crew_xp(15)
+    else:
+        print(f"😅 Missed it! The comet was at {target_angle}°")
 
-# ============= SPACE CASINO =============
-def space_casino():
-    global credits_total, crew_morale
+# ============= ALIEN TRADE =============
+def alien_trade():
+    global credits_total, inventory
+    print("\n🛸 ALIEN TRADING POST 🛸")
+    print(f"💰 Credits: {credits_total}")
+    items_list = list(alien_items.items())
+    for i, (item, price) in enumerate(items_list, 1):
+        print(f"{i}. {item} - {price} credits")
     
-    print("\n🎰 SPACE CASINO 🎰")
-    print("=" * 50)
-    print(f"💰 Your Credits: {credits_total}")
-    print(f"🎯 Biggest Win: {casino_stats['biggest_win']} credits")
-    print("\nAvailable Games:")
-    
-    games_list = list(casino_games.items())
-    for i, (game, data) in enumerate(games_list, 1):
-        print(f"{i}. {game}")
-        print(f"   Min Bet: {data['min_bet']} | Max Bet: {data['max_bet']} | Jackpot: {data['jackpot']}")
-    
-    print("\n5. View Casino Stats")
-    print("6. Back")
-    
-    choice = input("\nChoose game: ")
-    
-    if choice == "5":
-        view_casino_stats()
-    elif choice.isdigit() and 1 <= int(choice) <= len(games_list):
-        game_name, game_data = games_list[int(choice)-1]
-        play_casino_game(game_name, game_data)
+    choice = input("Buy (number) or 'quit': ")
+    if choice.isdigit() and 1 <= int(choice) <= len(items_list):
+        item, price = items_list[int(choice)-1]
+        if credits_total >= price:
+            credits_total -= price
+            inventory.append(item)
+            print(f"✨ Bought {item}!")
+            gain_crew_xp(10)
+            check_achievement("alien_friend")
+        else:
+            print("❌ Need more credits!")
 
-def play_casino_game(game_name, game_data):
-    global credits_total, crew_morale, casino_stats
+# ============= EXPLORE NEBULA =============
+def explore_nebula():
+    global fuel, achievements, research_points
+    print("\n🌌 NEBULA EXPLORATION")
+    neb_list = list(nebulae.items())
+    for i, (name, coords) in enumerate(neb_list[:5], 1):
+        print(f"{i}. {name}")
     
-    print(f"\n🎮 PLAYING: {game_name} 🎮")
-    print(f"💰 Your Credits: {credits_total}")
-    
-    bet = int(input(f"Enter bet ({game_data['min_bet']}-{game_data['max_bet']}): "))
-    
-    if bet < game_data['min_bet'] or bet > game_data['max_bet']:
-        print("❌ Invalid bet amount!")
-        return
-    
-    if bet > credits_total:
-        print("❌ Not enough credits!")
-        return
-    
-    credits_total -= bet
-    casino_stats['total_bet'] += bet
-    
-    print("\n🔄 Spinning...")
-    time.sleep(1.5)
-    
-    if game_name == "Cosmic Slots":
-        result = play_slots(b
+    choice = input("Explore (number) or 'quit': ")
+    if choice.isdigit() and 1 <= int(choice) <= 5:
+        neb_name, coords = neb_list[int(choice)-1]
+        print(f"\n🚀 Warping to {neb_name}...")
+        time.sleep(1)
+        
+        if random.random() < 0.6:
+            fuel_gained = random.randint(300, 1500)
+            fuel += fuel_gained
+            print(f"⛽ Collected {fuel_gained} fuel!")
+            check_achievement("fuel_hunter")
+            
+            if random.random() < 0.3:
+                discover_anomaly()
+        else:
+            artifact = random.choice(["ancient relic", "crystal shard", "energy core", "star chart"])
+            inventory.append(artifact)
+            print(f"🔮 Found {artifact}!")
+            research_points += 20
+            print
