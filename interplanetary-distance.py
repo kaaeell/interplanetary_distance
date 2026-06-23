@@ -125,13 +125,21 @@ def go_on_mission():
     print("1. Travel to known planets")
     print("2. Explore unknown space")
     
-    if input("Choice: ") == "1":
-        start_name, start = pick_destination()
-        end_name, end = pick_destination()
+    choice = input("Choice: ")
+    
+    if choice == "1":
+        start = pick_destination()
+        end = pick_destination()
+        start_name = "Your Location"
+        end_name = "Destination"
     else:
-        start = (float(input("Start x: ")), float(input("Start y: ")))
-        end = (float(input("End x: ")), float(input("End y: ")))
-        start_name, end_name = "Unknown", "Unknown"
+        try:
+            start = (float(input("Start x: ")), float(input("Start y: ")))
+            end = (float(input("End x: ")), float(input("End y: ")))
+            start_name, end_name = "Unknown", "Unknown"
+        except:
+            print("❌ Invalid coordinates!")
+            return
     
     # Calculate your journey
     dist = distance(start, end)
@@ -156,20 +164,28 @@ def go_on_mission():
     needed = dist * 0.5
     if you["fuel"] < needed:
         print(f"\n⛽ Uh oh! Need {needed:.0f} fuel, have {you['fuel']:.0f}")
-        if input("1. Mine asteroid  2. Buy fuel: ") == "1":
+        fuel_choice = input("1. Mine asteroid  2. Buy fuel: ")
+        if fuel_choice == "1":
             if random.random() < 0.6:
-                you["fuel"] += random.randint(200, 800)
-                print("✅ Mined some fuel!")
+                gained = random.randint(200, 800)
+                you["fuel"] += gained
+                print(f"✅ Mined {gained} fuel!")
             else:
-                you["fuel"] = max(0, you["fuel"] - random.randint(50, 200))
-                print("💥 Ouch! Asteroid damaged your ship!")
-        else:
-            amount = int(input("How much fuel? "))
-            cost = amount * 2
-            if you["credits"] >= cost:
-                you["credits"] -= cost
-                you["fuel"] += amount
-                print(f"✅ Bought {amount} fuel!")
+                lost = random.randint(50, 200)
+                you["fuel"] = max(0, you["fuel"] - lost)
+                print(f"💥 Ouch! Asteroid damaged your ship! Lost {lost} fuel")
+        elif fuel_choice == "2":
+            try:
+                amount = int(input("How much fuel? "))
+                cost = amount * 2
+                if you["credits"] >= cost:
+                    you["credits"] -= cost
+                    you["fuel"] += amount
+                    print(f"✅ Bought {amount} fuel!")
+                else:
+                    print("❌ Not enough credits!")
+            except:
+                print("❌ Invalid amount!")
         return
     
     # Mission success!
@@ -206,7 +222,7 @@ def hunt_bounty():
     for i, target in enumerate(available[:3], 1):
         print(f"{i}. {target['name']} - 💰 {target['reward']}")
     
-    choice = input("Who do you want? ")
+    choice = input("Who do you want? (number or 'q'): ")
     if not choice.isdigit() or int(choice) > len(available[:3]):
         return
     
@@ -225,16 +241,19 @@ def hunt_bounty():
             damage = random.randint(2, 6)
             their_hp -= damage
             print(f"⚡ You hit for {damage}!")
-            counter = random.randint(1, 4)
-            my_hp -= counter
-            print(f"💥 They hit back for {counter}!")
-        else:
+            if their_hp > 0:
+                counter = random.randint(1, 4)
+                my_hp -= counter
+                print(f"💥 They hit back for {counter}!")
+        elif action == "2":
             if random.random() < 0.5:
                 print("🛡️ You dodged!")
             else:
                 counter = random.randint(2, 5)
                 my_hp -= counter
                 print(f"💥 Too slow! Took {counter} damage!")
+        else:
+            print("Invalid action!")
     
     if my_hp > 0:
         you["credits"] += target["reward"]
@@ -258,7 +277,7 @@ def do_research():
         print(f"{i}. {name} - {status}")
     print("4. Convert 100 credits → 20 points")
     
-    choice = input("What to research? ")
+    choice = input("What to research? (number): ")
     if choice.isdigit() and 1 <= int(choice) <= 3:
         name, data = list(tech.items())[int(choice)-1]
         if not data["owned"] and you["research"] >= data["cost"]:
@@ -267,11 +286,14 @@ def do_research():
             print(f"✨ UNLOCKED {name}!")
             celebrate("research")
         else:
-            print("❌ Not enough points!")
-    elif choice == "4" and you["credits"] >= 100:
-        you["credits"] -= 100
-        you["research"] += 20
-        print("✅ Converted credits to research!")
+            print("❌ Not enough points or already owned!")
+    elif choice == "4":
+        if you["credits"] >= 100:
+            you["credits"] -= 100
+            you["research"] += 20
+            print("✅ Converted credits to research!")
+        else:
+            print("❌ Not enough credits!")
 
 def trade_with_aliens():
     """Meet space friends and trade!"""
@@ -295,6 +317,8 @@ def trade_with_aliens():
             you["credits"] -= price
             you["stuff"].append(item)
             print(f"✨ Bought {item}!")
+        else:
+            print("❌ Not enough credits!")
 
 def explore_nebula():
     """Fly into colorful space clouds!"""
@@ -304,7 +328,7 @@ def explore_nebula():
     for i, name in enumerate(nebulae.keys(), 1):
         print(f"{i}. {name}")
     
-    choice = input("Where to? ")
+    choice = input("Where to? (number): ")
     if choice.isdigit() and 1 <= int(choice) <= len(nebulae):
         name = list(nebulae.keys())[int(choice)-1]
         print(f"\n🚀 Flying into {name}...")
@@ -320,6 +344,8 @@ def explore_nebula():
             you["stuff"].append(treasure)
             print(f"🔮 Found {treasure}!")
             you["research"] += 20
+    else:
+        print("Invalid choice!")
 
 def show_stats():
     """How's your space journey going?"""
@@ -363,9 +389,12 @@ def save_game():
         "trophies": you["trophies"], "stuff": you["stuff"],
         "crew": crew
     }
-    with open("space_save.json", "w") as f:
-        json.dump(data, f)
-    print("💾 Adventure saved!")
+    try:
+        with open("space_save.json", "w") as f:
+            json.dump(data, f)
+        print("💾 Adventure saved!")
+    except:
+        print("❌ Could not save!")
 
 def load_game():
     """Continue your space journey"""
@@ -375,8 +404,10 @@ def load_game():
             data = json.load(f)
         
         for key in data:
-            if key in you:
+            if key in you and key != "trophies" and key != "stuff":
                 you[key] = data[key]
+        you["trophies"] = data.get("trophies", [])
+        you["stuff"] = data.get("stuff", [])
         crew[:] = data.get("crew", crew)
         
         print("📀 Welcome back, Captain!")
@@ -436,3 +467,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
