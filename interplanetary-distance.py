@@ -1,10 +1,11 @@
 """
-🚀 SPACE ADVENTURE - The Friendly Edition
+🚀 SPACE ADVENTURE - The Friendly Edition v3.5
 A cozy space game where you explore, trade, and become a legend!
-Just you, your crew, and the infinite cosmos.
+New: Space pets, random jokes, daily luck, and more!
 """
 
 import math, random, time, json, os
+from datetime import datetime
 
 # ============================================
 # YOUR SHIP - Your home in the stars
@@ -19,7 +20,10 @@ you = {
     "rank": 1,           # Bounty hunter rank
     "record": 0,         # Furthest trip
     "trophies": [],      # Achievements
-    "stuff": []          # Your treasures
+    "stuff": [],         # Your treasures
+    "pets": [],          # NEW: Space pets!
+    "luck": 0,           # NEW: Daily luck
+    "last_play": None    # NEW: Track last play date
 }
 
 # ============================================
@@ -36,6 +40,25 @@ crew = [
 # ============================================
 # THE COSMOS - All the cool stuff
 # ============================================
+
+# NEW: Space pets you can find!
+space_pets = [
+    "🐶 Space Dog", "🐱 Robot Cat", "🐹 Alien Hamster", 
+    "🐉 Tiny Dragon", "🦊 Quantum Fox", "🐧 Space Penguin",
+    "🦄 Nebula Unicorn", "🐙 Star Octopus"
+]
+
+# NEW: Funny space jokes!
+jokes = [
+    "Why did the star go to school? To get a little brighter!",
+    "What do astronauts use to keep their pants up? An asteroid belt!",
+    "Why don't aliens visit our solar system? They read the reviews... only one star!",
+    "How do you organize a space party? You planet!",
+    "What's an astronaut's favorite key? The space bar!",
+    "Why did the alien cross the galaxy? To get to the other side!",
+    "What do you call a lazy astronaut? A space cadet!",
+    "Why is space so clean? Because nobody dusts!"
+]
 
 # Planets you can visit
 PLANETS = {
@@ -67,7 +90,9 @@ trophies = {
     "legend": "⭐ You're a space legend!",
     "streak": "🔥 You're on fire!",
     "bounty": "💰 You caught a criminal!",
-    "research": "🧠 You're a genius!"
+    "research": "🧠 You're a genius!",
+    "pet": "🐾 You found a space pet!",
+    "lucky": "🍀 You're lucky today!"
 }
 
 # ============================================
@@ -95,6 +120,40 @@ def crew_growth(amount):
             print(f"\n🎉 {person['name']} is now level {person['level']}!")
             you["credits"] += random.randint(100, 300)
 
+# NEW: Daily luck system
+def check_daily_luck():
+    today = datetime.now().date()
+    if you["last_play"] != str(today):
+        you["luck"] = random.randint(1, 10)
+        you["last_play"] = str(today)
+        print(f"\n🍀 Today's luck: {'⭐' * you['luck']}")
+        if you["luck"] >= 8:
+            print("🌟 You feel extra lucky today!")
+            celebrate("lucky")
+        elif you["luck"] >= 5:
+            print("✨ It's a good day for adventures!")
+        else:
+            print("🌙 Maybe stay safe today...")
+        time.sleep(0.5)
+
+# NEW: Find a space pet!
+def find_pet():
+    pet = random.choice(space_pets)
+    if pet not in you["pets"]:
+        you["pets"].append(pet)
+        print(f"\n🐾 A {pet} has joined your crew! How cute!")
+        celebrate("pet")
+        you["morale"] = min(100, you["morale"] + 10)
+    else:
+        print(f"\n🐾 {pet} is already part of your crew!")
+
+# NEW: Tell a joke!
+def tell_joke():
+    joke = random.choice(jokes)
+    print(f"\n😂 {joke}\n")
+    you["morale"] = min(100, you["morale"] + 5)
+    print(f"😊 Crew morale +5! (Now: {you['morale']}%)")
+
 # ============================================
 # WHAT YOU CAN DO
 # ============================================
@@ -121,6 +180,8 @@ def pick_destination():
 
 def go_on_mission():
     """Your main adventure!"""
+    check_daily_luck()
+    
     print("\n🚀 PREPARING FOR LAUNCH!")
     print("1. Travel to known planets")
     print("2. Explore unknown space")
@@ -150,15 +211,20 @@ def go_on_mission():
         you["record"] = dist
         print("🏆 That's your longest trip yet!")
     
-    # Space surprises!
-    if random.random() < 0.25:
-        if random.random() < 0.5:
+    # Space surprises with luck bonus!
+    if random.random() < 0.25 + (you["luck"] * 0.01):
+        event = random.choice(["wormhole", "treasure", "pet", "joke"])
+        if event == "wormhole":
             dist *= 0.6
             print("🌀 You found a wormhole shortcut!")
-        else:
-            bonus = random.randint(100, 300)
+        elif event == "treasure":
+            bonus = random.randint(100, 300) + (you["luck"] * 10)
             you["credits"] += bonus
             print(f"💰 Found space treasure! +{bonus} credits!")
+        elif event == "pet":
+            find_pet()
+        elif event == "joke":
+            tell_joke()
     
     # Fuel check
     needed = dist * 0.5
@@ -166,7 +232,7 @@ def go_on_mission():
         print(f"\n⛽ Uh oh! Need {needed:.0f} fuel, have {you['fuel']:.0f}")
         fuel_choice = input("1. Mine asteroid  2. Buy fuel: ")
         if fuel_choice == "1":
-            if random.random() < 0.6:
+            if random.random() < 0.6 + (you["luck"] * 0.02):
                 gained = random.randint(200, 800)
                 you["fuel"] += gained
                 print(f"✅ Mined {gained} fuel!")
@@ -190,7 +256,7 @@ def go_on_mission():
     
     # Mission success!
     you["fuel"] -= needed
-    earned = int(dist * 0.8 + 50)
+    earned = int(dist * 0.8 + 50 + (you["luck"] * 2))
     you["credits"] += earned
     you["missions"] += 1
     you["streak"] += 1
@@ -199,6 +265,10 @@ def go_on_mission():
     print(f"\n✅ MISSION COMPLETE! +{earned} credits")
     print(f"⛽ Fuel left: {you['fuel']:.0f}")
     print(f"😊 Crew morale: {you['morale']}%")
+    
+    # Random chance to find a pet on mission
+    if random.random() < 0.05:
+        find_pet()
     
     # Check for achievements
     if you["missions"] == 1: celebrate("first")
@@ -210,6 +280,8 @@ def go_on_mission():
 
 def hunt_bounty():
     """Catch space criminals for money!"""
+    check_daily_luck()
+    
     print("\n💰 BOUNTY HUNTING")
     print(f"🏆 Your rank: {you['rank']}")
     
@@ -230,15 +302,17 @@ def hunt_bounty():
     print(f"\n⚔️ FIGHTING {target['name']}...")
     time.sleep(0.5)
     
-    my_hp = target["hp"]
+    my_hp = target["hp"] + (you["luck"] // 3)
     their_hp = target["hp"]
+    
+    print(f"💪 Luck bonus: +{you['luck']//3} extra health!")
     
     while my_hp > 0 and their_hp > 0:
         print(f"\n❤️ You: {my_hp} | {target['name']}: {their_hp}")
         action = input("1. Attack  2. Dodge: ")
         
         if action == "1":
-            damage = random.randint(2, 6)
+            damage = random.randint(2, 6) + (you["luck"] // 5)
             their_hp -= damage
             print(f"⚡ You hit for {damage}!")
             if their_hp > 0:
@@ -246,7 +320,7 @@ def hunt_bounty():
                 my_hp -= counter
                 print(f"💥 They hit back for {counter}!")
         elif action == "2":
-            if random.random() < 0.5:
+            if random.random() < 0.5 + (you["luck"] * 0.02):
                 print("🛡️ You dodged!")
             else:
                 counter = random.randint(2, 5)
@@ -256,8 +330,9 @@ def hunt_bounty():
             print("Invalid action!")
     
     if my_hp > 0:
-        you["credits"] += target["reward"]
-        print(f"\n🎉 VICTORY! +{target['reward']} credits!")
+        reward_bonus = int(target["reward"] * (1 + you["luck"] * 0.01))
+        you["credits"] += reward_bonus
+        print(f"\n🎉 VICTORY! +{reward_bonus} credits! (Luck bonus included)")
         if target["level"] == you["rank"]:
             you["rank"] += 1
             print(f"🏆 Rank up! Now {you['rank']}")
@@ -334,8 +409,8 @@ def explore_nebula():
         print(f"\n🚀 Flying into {name}...")
         time.sleep(1)
         
-        if random.random() < 0.6:
-            fuel_found = random.randint(300, 1500)
+        if random.random() < 0.6 + (you["luck"] * 0.02):
+            fuel_found = random.randint(300, 1500) + (you["luck"] * 10)
             you["fuel"] += fuel_found
             print(f"⛽ Found {fuel_found} fuel!")
             celebrate("fuel")
@@ -343,7 +418,11 @@ def explore_nebula():
             treasure = random.choice(["relic", "crystal", "chart"])
             you["stuff"].append(treasure)
             print(f"🔮 Found {treasure}!")
-            you["research"] += 20
+            you["research"] += 20 + (you["luck"] * 2)
+        
+        # Chance to find a pet in nebula
+        if random.random() < 0.08:
+            find_pet()
     else:
         print("Invalid choice!")
 
@@ -360,12 +439,18 @@ def show_stats():
     print(f"😊 Morale: {you['morale']}%")
     print(f"🏆 Bounty Rank: {you['rank']}")
     print(f"📏 Furthest: {you['record']:.0f} million km")
+    print(f"🍀 Luck: {'⭐' * you['luck']}")
     print(f"🏅 Achievements: {len(you['trophies'])}")
     
     if you["trophies"]:
         print("\n🏅 Your trophies:")
         for t in you["trophies"]:
             print(f"  • {trophies[t]}")
+    
+    if you["pets"]:
+        print("\n🐾 Your space pets:")
+        for pet in you["pets"]:
+            print(f"  • {pet}")
     
     if you["stuff"]:
         print("\n📦 Your stuff:")
@@ -387,7 +472,8 @@ def save_game():
         "morale": you["morale"], "research": you["research"],
         "rank": you["rank"], "record": you["record"],
         "trophies": you["trophies"], "stuff": you["stuff"],
-        "crew": crew
+        "pets": you["pets"], "luck": you["luck"],
+        "last_play": you["last_play"], "crew": crew
     }
     try:
         with open("space_save.json", "w") as f:
@@ -404,10 +490,11 @@ def load_game():
             data = json.load(f)
         
         for key in data:
-            if key in you and key != "trophies" and key != "stuff":
+            if key in you and key != "trophies" and key != "stuff" and key != "pets":
                 you[key] = data[key]
         you["trophies"] = data.get("trophies", [])
         you["stuff"] = data.get("stuff", [])
+        you["pets"] = data.get("pets", [])
         crew[:] = data.get("crew", crew)
         
         print("📀 Welcome back, Captain!")
@@ -415,6 +502,29 @@ def load_game():
     except:
         print("❌ No saved game found!")
         return False
+
+# NEW: Fun menu option - do something random!
+def random_fun():
+    print("\n🎲 RANDOM FUN!")
+    print("="*40)
+    options = [
+        "tell_joke",
+        "find_pet",
+        "check_daily_luck",
+        "find_treasure"
+    ]
+    choice = random.choice(options)
+    
+    if choice == "tell_joke":
+        tell_joke()
+    elif choice == "find_pet":
+        find_pet()
+    elif choice == "check_daily_luck":
+        check_daily_luck()
+    elif choice == "find_treasure":
+        treasure = random.randint(50, 200) + (you["luck"] * 5)
+        you["credits"] += treasure
+        print(f"\n💰 You found {treasure} credits floating in space!")
 
 # ============================================
 # LET'S GO!
@@ -425,12 +535,14 @@ def main():
     ╔══════════════════════════════════════════╗
     ║   🚀 SPACE DISTANCE CALCULATOR 🚀       ║
     ║      The Friendly Space Adventure!      ║
+    ║           Version 3.5                   ║
     ║                                         ║
     ║   "The cosmos is yours to explore!"     ║
     ╚══════════════════════════════════════════╝
     """)
     
     print("🌟 Welcome, Captain! The galaxy awaits!\n")
+    check_daily_luck()
     
     while True:
         print("\n" + "="*40)
@@ -445,7 +557,8 @@ def main():
         print("7. 🌌 Explore nebula")
         print("8. 💾 Save")
         print("9. 📀 Load")
-        print("10. ❌ Quit")
+        print("10. 🎲 Random fun")
+        print("11. ❌ Quit")
         
         choice = input("\nYour choice: ")
         
@@ -458,7 +571,8 @@ def main():
         elif choice == "7": explore_nebula()
         elif choice == "8": save_game()
         elif choice == "9": load_game()
-        elif choice == "10":
+        elif choice == "10": random_fun()
+        elif choice == "11":
             print("\n👋 Farewell, Captain! The stars will miss you!")
             print("⭐ Live long and prosper! 🖖")
             break
@@ -467,4 +581,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
