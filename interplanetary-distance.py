@@ -181,8 +181,10 @@ def mission():
 
     if choice == "1":
         start, end = pick_planet()
-        start_name, end_name = "Earth", "Destination"
-        for name, coords in PLANETS.values():
+        start_name = "Earth"
+        end_name = "Destination"
+        # Get correct planet names
+        for num, (name, coords) in PLANETS.items():
             if coords == start:
                 start_name = name
             if coords == end:
@@ -203,6 +205,7 @@ def mission():
         player["record"] = dist
         print("🏆 New record!")
 
+    # Random events
     if random.random() < 0.25 + (player["luck"] * 0.01):
         event = random.choice(["wormhole", "treasure", "pet", "joke"])
         if event == "wormhole":
@@ -258,6 +261,7 @@ def mission():
     print(f"⛽ Fuel: {player['fuel']:.0f}")
     print(f"😊 Morale: {player['morale']}%")
 
+    # Check achievements
     if player["missions"] == 1:
         unlock("first")
     if player["credits"] >= 10000:
