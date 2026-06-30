@@ -30,9 +30,9 @@ player = {
     "pets": [],
     "luck": 0,
     "last_play": None,
-    "pirates_defeated": 0,  # NEW
-    "nebula_explored": 0,   # NEW
-    "jokes_told": 0         # NEW
+    "pirates_defeated": 0,
+    "nebula_explored": 0,
+    "jokes_told": 0
 }
 
 # ============================================
@@ -67,14 +67,14 @@ BOUNTIES = [
     {"name": "🏴‍☠️ Red Pirate", "reward": 500, "level": 1, "hp": 3},
     {"name": "🌑 Shadow Corsair", "reward": 1000, "level": 2, "hp": 5},
     {"name": "💀 Void Reaver", "reward": 2000, "level": 3, "hp": 7},
-    {"name": "👾 Galactic Menace", "reward": 3500, "level": 4, "hp": 10}  # NEW
+    {"name": "👾 Galactic Menace", "reward": 3500, "level": 4, "hp": 10}
 ]
 
 TECH = {
     "⛽ Fuel Efficiency": {"cost": 100, "owned": False, "desc": "Use 10% less fuel"},
     "⚡ Warp Drive": {"cost": 200, "owned": False, "desc": "20% faster travel"},
     "🛡️ Shield Tech": {"cost": 150, "owned": False, "desc": "Take less damage"},
-    "🔭 Scanner Range": {"cost": 120, "owned": False, "desc": "Find more treasures"}  # NEW
+    "🔭 Scanner Range": {"cost": 120, "owned": False, "desc": "Find more treasures"}
 }
 
 ACHIEVEMENTS = {
@@ -89,15 +89,15 @@ ACHIEVEMENTS = {
     "pet": "🐾 Found a space pet!",
     "lucky": "🍀 Had a lucky day!",
     "traveler": "🌠 Traveled 10000 million km total!",
-    "pirate_hunter": "⚔️ Defeated 10 pirates!",  # NEW
-    "nebula_expert": "🌌 Explored 5 nebulae!",   # NEW
-    "jokester": "😂 Told 10 jokes!"             # NEW
+    "pirate_hunter": "⚔️ Defeated 10 pirates!",
+    "nebula_expert": "🌌 Explored 5 nebulae!",
+    "jokester": "😂 Told 10 jokes!"
 }
 
 PETS = [
     "🐶 Space Dog", "🐱 Robot Cat", "🐹 Alien Hamster", 
     "🐉 Tiny Dragon", "🦊 Quantum Fox", "🐧 Space Penguin", 
-    "🐙 Star Octopus", "🦄 Nebula Unicorn"  # NEW
+    "🐙 Star Octopus", "🦄 Nebula Unicorn"
 ]
 
 JOKES = [
@@ -116,19 +116,19 @@ NEBULAE = {
     "🦅 Eagle Nebula": (7000, 0),
     "🌀 Helix Nebula": (695, 280),
     "🦀 Crab Nebula": (6500, 190),
-    "💀 Skull Nebula": (4200, -500)  # NEW
+    "💀 Skull Nebula": (4200, -500)
 }
 
-ALIEN_ITEMS = {  # NEW - better organized
+ALIEN_ITEMS = {
     "🌌 Dark Crystal": 500,
     "💫 Warp Core": 2000,
     "🔮 Quantum Shield": 1500,
     "🍕 Space Pizza": 50,
     "📡 Anomaly Scanner": 800,
-    "🧪 Research Data": 400  # NEW
+    "🧪 Research Data": 400
 }
 
-WELCOME_MESSAGES = [  # NEW
+WELCOME_MESSAGES = [
     "The stars are calling!",
     "Adventure awaits!",
     "Time to explore the cosmos!",
@@ -243,8 +243,9 @@ def pick_planet():
     start = choose("🌍 Starting planet: ")
     end = choose("🎯 Destination planet: ")
     
-    start_name = "Earth"
-    end_name = "Destination"
+    # Get planet names
+    start_name = "🌍 Earth"
+    end_name = "📍 Destination"
     for num, (name, coords) in PLANETS.items():
         if coords == start:
             start_name = name
@@ -281,11 +282,13 @@ def start_mission():
         print("❌ Invalid choice!")
         return
 
+    # Calculate distance
     dist = distance(start, end)
     player["total_distance"] += dist
     print(f"\n📏 Distance: {dist:,.0f} million km")
     print(f"📊 Total distance traveled: {player['total_distance']:,.0f} million km")
 
+    # Check for new record
     if dist > player["record"]:
         player["record"] = dist
         print("🏆 NEW RECORD DISTANCE!")
@@ -316,6 +319,10 @@ def start_mission():
 
     # Fuel check
     fuel_needed = dist * 0.5
+    if TECH["⛽ Fuel Efficiency"]["owned"]:
+        fuel_needed *= 0.9
+        print("⛽ Fuel Efficiency active! Using less fuel.")
+    
     if player["fuel"] < fuel_needed:
         print(f"\n⛽ INSUFFICIENT FUEL!")
         print(f"   Need: {fuel_needed:.0f} fuel")
@@ -352,10 +359,6 @@ def start_mission():
         return
 
     # Complete mission
-    if TECH["⛽ Fuel Efficiency"]["owned"]:
-        fuel_needed *= 0.9
-        print("⛽ Fuel Efficiency active! Using less fuel.")
-    
     player["fuel"] -= fuel_needed
     earned = int(dist * 0.8 + 50 + (player["luck"] * 2))
     player["credits"] += earned
@@ -413,6 +416,7 @@ def hunt_bounty():
     print(f"\n⚔️ ENGAGING {target['name']}...")
     time.sleep(0.5)
 
+    # Combat
     my_hp = target["hp"] + (player["luck"] // 3)
     enemy_hp = target["hp"]
     
@@ -596,7 +600,7 @@ def random_activity():
         print(f"\n🧘‍♂️ Your crew meditates in zero-gravity.")
         print(f"😊 Morale +{gain}! (Now: {player['morale']}%)")
 
-def view_help():  # NEW
+def view_help():
     """Show helpful tips"""
     print_header("📖 CAPTAIN'S GUIDE")
     print("""
@@ -665,9 +669,10 @@ def show_crew():
         print(f"   Skill: {member['skill']}")
         print(f"   Level: {member['level']}")
         print(f"   XP: {member['xp']}/{member['level'] * 100}")
-        progress = member['xp'] // 10
-        bar = "█" * min(progress, 10) + "░" * (10 - min(progress, 10))
-        print(f"   Progress: [{bar}]")
+        if member['level'] * 100 > 0:
+            progress = int((member['xp'] / (member['level'] * 100)) * 10)
+            bar = "█" * progress + "░" * (10 - progress)
+            print(f"   Progress: [{bar}]")
 
 # ============================================
 # SAVE/LOAD FUNCTIONS
@@ -711,14 +716,23 @@ def load_game():
         with open("space_save.json", "r") as f:
             data = json.load(f)
 
+        # Load player data
         for key in data:
             if key in player and key not in ["trophies", "inventory", "pets"]:
                 player[key] = data[key]
+        
+        # Load lists
         player["trophies"] = data.get("trophies", [])
         player["inventory"] = data.get("inventory", [])
         player["pets"] = data.get("pets", [])
-        crew[:] = data.get("crew", crew)
         
+        # Load crew
+        if "crew" in data:
+            for i, member in enumerate(data["crew"]):
+                if i < len(crew):
+                    crew[i] = member
+        
+        # Load tech
         if "tech" in data:
             for name, values in data["tech"].items():
                 if name in TECH:
